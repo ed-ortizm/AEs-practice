@@ -29,6 +29,10 @@ class DenseVAE:
         self.inputs = Input(shape=(self.n_input_dimensions,),
             name='vae_input_layer')
 
+        self.latent_mu = encoder.latent_mu
+        self.latent_ln_sigma = encoder.latent_ln_sigma
+        self.loss = None
+        
         self.vae = self.build_vae()
     ############################################################################
     def plot_model(self):
@@ -49,8 +53,27 @@ class DenseVAE:
             name='DenseVAE'
         )
 
+        self.loss = self.vae_loss(z_m=self.latent_mu, z_s=self.latent_ln_sigma)
+        vae.compile(loss=self.loss, optimizer='adam') #, lr = self.lr)
+
         return vae
     ############################################################################
+    def vae_loss(self, z_m, z_s):
+
+        kl_loss = kl_loss(z_m, z_s)
+        rec_loss = rec_loss(y_true, y_pred)
+
+        return K.mean(kl_loss + rec_loss)
+    ############################################################################
+    def rec_loss(y_true, y_pred):
+
+        return keras.losses.mse(y_true, y_pred)
+    ############################################################################
+    def kl_loss(self, z_m, z_s):
+
+        kl_loss = 1 + z_s - K.square(z_m) - K.exp(z_s)
+
+        return -0.5*K.sum(kl_loss, axis=-1)
 ################################################################################
 class DenseDecoder:
 
@@ -120,6 +143,9 @@ class DenseEncoder:
         self.inputs = Input(shape=(self.n_input_dimensions,),
             name='encoder_input_layer')
 
+        self.latent_mu = None
+        self.latent_ln_sigma = None
+
         self.encoder = self.build_encoder()
     ############################################################################
     def plot_model(self):
@@ -160,15 +186,15 @@ class DenseEncoder:
 
         w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
 
-        latent_mu = Dense(self.n_latent_dimensions, name='latent_mu',
+        self.latent_mu = Dense(self.n_latent_dimensions, name='latent_mu',
             kernel_initializer=w_init)(X)
 
-        latent_ln_sigma = Dense(self.n_latent_dimensions,
+        self.latent_ln_sigma = Dense(self.n_latent_dimensions,
             name='latent_ln_sigma', kernel_initializer=w_init)(X)
 
         latent = Lambda(self._sample_latent_features,
             output_shape=(self.n_latent_dimensions,),
-            name='latent')([latent_mu, latent_ln_sigma])
+            name='latent')([self.latent_mu, self.latent_ln_sigma])
 
         return latent
     ###########################################################################
