@@ -36,6 +36,10 @@ class DenseDecoder:
 
         self.decoder = self.build_decoder()
     ###########################################################################
+    def summary(self):
+
+        self.decoder.summary()
+    ###########################################################################
     def build_decoder(self):
 
         input_layer = Input(shape=(self.n_latent_dimensions,), name='decoder_input')
@@ -60,8 +64,16 @@ class DenseDecoder:
 
         return decoder
     ###########################################################################
-    
-    ###########################################################################
+    def _output_layer(self, n_units, X):
+
+        std_dev = np.sqrt(2./n_units)
+
+        w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
+
+        output_layer = Dense(self.n_output_dimensions, name='decoder_output',
+        kernel_initializer=w_init)(X)
+
+        return output_layer
 
 ################################################################################
 class DenseEncoder:
