@@ -14,7 +14,7 @@ from tensorflow.keras.losses import mse
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 
-from constants_VAE_outlier import sdss_data_proc
+from constants_VAE_outlier import spectra_path
 
 ################################################################################
 class DataAnalysis:
@@ -131,7 +131,7 @@ class DenseDecoder:
 
     ###########################################################################
     def __init__(self, n_latent_dimensions: 'int', n_output_dimensions: 'int',
-                 n_hiden_layers: 'list') -> 'keras.model':
+                 n_hiden_layers: 'list') -> 'None':
 
         self.n_latent_dimensions = n_latent_dimensions
         self.n_output_dimensions = n_output_dimensions
@@ -190,7 +190,7 @@ class DenseEncoder:
 
     ###########################################################################
     def __init__(self, n_input_dimensions: 'int', n_hiden_layers: 'list',
-                 n_latent_dimensions: 'int') -> 'keras.model':
+                 n_latent_dimensions: 'int') -> 'None':
 
         self.n_input_dimensions = n_input_dimensions
         self.n_hiden_layers = n_hiden_layers
