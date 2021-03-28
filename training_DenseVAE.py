@@ -14,7 +14,7 @@ from tensorflow import keras
 
 from constants_VAE_outlier import normalization_schemes
 from constants_VAE_outlier import spectra_dir, working_dir
-from lib_VAE_outlier import DenseVAEv2
+from lib_VAE_outlier import DenseVAE
 ###############################################################################
 ti = time.time()
 ###############################################################################
@@ -38,7 +38,7 @@ else:
     sys.exit()
 ###############################################################################
 # Relevant directories
-training_data_dir = f'{spectra_dir}/processed_spectra'
+training_data_dir = f'{spectra_dir}/normalized_data'
 ###############################################################################
 # Loading training data
 fname = f'spectra_{n_spectra}_{normalization_type}.npy'
@@ -48,36 +48,37 @@ if os.path.exists(fpath):
 
     print(f'Loading training set: {fname}')
 
-    training_set =  np.load(f'{training_data_dir}/{fname}', mmap_mode='r')
+    training_set =  np.load(f'{fpath}', mmap_mode='r')
 
 else:
     print(f'There is no file: {fname}')
+    sys.exit()
 ###############################################################################
 # Parameters for the DenseVAE
-n_input_dimensions = training_set.shape[1]
+n_input_dimensions = training_set[:, :-5].shape[1]
 n_latent_dimensions = 5
 ###########################################
 # encoder
-n_layers_encoder = [25]
+n_layers_encoder = [100, 50]
 
 # decoder
-n_layers_decoder = [25]
+n_layers_decoder = [50, 100]
 
 # DenseVAEv2
-vae = DenseVAEv2(n_input_dimensions, n_layers_encoder, n_latent_dimensions,
+vae = DenseVAE(n_input_dimensions, n_layers_encoder, n_latent_dimensions,
     n_layers_decoder)
 
 vae.vae.summary()
 ###############################################################################
 # Training the model
 
-vae.vae.fit(x=training_set, y=training_set, batch_size=32, epochs=20)
-###############################################################################
-# Defining directorie to save the model once it is trained
-models_dir = f'{working_dir}/models'
-
-if not os.path.exists(models_dir):
-    os.makedirs(models_dir, exist_ok=True)
+vae.vae.fit(x=training_set[:, :-5], y=training_set[:, :-5], batch_size=10, epochs=20)
+# ###############################################################################
+# # Defining directorie to save the model once it is trained
+# models_dir = f'{working_dir}/models'
+#
+# if not os.path.exists(models_dir):
+#     os.makedirs(models_dir, exist_ok=True)
 ###############################################################################
 tf = time.time()
 print(f'Running time: {tf-ti:.2f}')
