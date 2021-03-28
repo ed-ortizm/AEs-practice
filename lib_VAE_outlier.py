@@ -1,4 +1,5 @@
 from glob import glob
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,12 +15,37 @@ from tensorflow.keras.losses import mse
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 
+from constants_VAE_outlier import normalization_schemes
 from constants_VAE_outlier import spectra_dir
+###############################################################################
+def input_handler(script_arguments:'list'):
+
+    local = script_arguments[1]=='local'
+
+    if local:
+        print('We are in local')
+        n_spectra = 1_000
+    else:
+        print('We are in remote')
+        n_spectra = int(script_arguments[2])
+
+    if script_arguments[3] in normalization_schemes:
+
+        normalization_type = script_arguments[3]
+
+        print(f'normalization type: {normalization_type}')
+
+    else:
+        print('Normalyzation type should be: median, min_max or Z')
+        sys.exit()
+
+
+    return n_spectra, normalization_type, local
+
 ###############################################################################
 class DenseVAE:
     """ VAE for outlier detection using tf.keras """
     ############################################################################
-
     def __init__(self, n_input_dimensions:'int', n_layers_encoder: 'list',
         n_latent_dimensions:'int', n_layers_decoder: 'list', batch_size:'int',
         epochs:'int')->'None':
@@ -38,6 +64,7 @@ class DenseVAE:
 
         self.latent_mu = None
         self.latent_ln_sigma = None
+
         self.encoder = self.build_encoder()
 
         self.decoder = self.build_decoder()
@@ -90,21 +117,27 @@ class DenseVAE:
         self.latent_ln_sigma = Dense(self.n_latent_dimensions,
             name='latent_ln_sigma', kernel_initializer=w_init)(X)
 
-        latent = Lambda(self._sample_latent_features,
+        # latent = Lambda(self._sample_latent_features,
+        #                 output_shape=(self.n_latent_dimensions,),
+        #                 name='latent')([self.latent_mu, self.latent_ln_sigma])
+
+        ########################################################################
+        # def _sample_latent_features(self, distribution):
+        def _sample_latent_features(distribution):
+
+            z_m, z_s = distribution
+            batch = K.shape(z_m)[0]
+            dim = K.int_shape(z_m)[1]
+            epsilon = K.random_normal(shape=(batch, dim))
+
+            return z_m + K.exp(0.5 * z_s) * epsilon
+        ########################################################################
+        latent = Lambda(_sample_latent_features,
                         output_shape=(self.n_latent_dimensions,),
                         name='latent')([self.latent_mu, self.latent_ln_sigma])
 
         return latent
-    ###########################################################################
-    def _sample_latent_features(self, distribution):
-
-        z_m, z_s = distribution
-        batch = K.shape(z_m)[0]
-        dim = K.int_shape(z_m)[1]
-        epsilon = K.random_normal(shape=(batch, dim))
-
-        return z_m + K.exp(0.5 * z_s) * epsilon
-    ############################################################################
+    # ###########################################################################
     def build_decoder(self)->'None':
 
         input_layer = Input(shape=(self.n_latent_dimensions,),

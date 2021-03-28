@@ -9,6 +9,7 @@ import sys
 import time
 
 import numpy as np
+from tensorflow import keras
 
 from constants_VAE_outlier import spectra_dir, working_dir
 from lib_VAE_outlier import DenseVAE
@@ -39,47 +40,14 @@ else:
 n_galaxies = training_set.shape[0]
 n_input_dimensions = training_set[:, :-5].shape[1]
 n_latent_dimensions = 10
-###########################################
-# encoder
-n_layers_encoder = [549, 110]
-
-# decoder
-n_layers_decoder = [110, 549]
-
-# Other parameters
-# 1% to take advantage of stochastic part of stochastic gradient descent
-batch_size = int(n_galaxies*0.01)
-print(f'Batch size is: {batch_size}')
-
-epochs = 20
-# DenseVAEv2
-vae = DenseVAE(n_input_dimensions, n_layers_encoder, n_latent_dimensions,
-    n_layers_decoder, batch_size, epochs)
-
-vae.summary()
 ###############################################################################
-# Training the model
-
-vae.fit(spectra=training_set[:, :-5])
-###############################################################################
-# Defining directorie to save the model once it is trained
-
-if local:
-    print('We are in local. No need to save the model')
-    sys.exit()
-
+# Loading VAE trained model
 models_dir = f'{working_dir}/models'
-
-if not os.path.exists(models_dir):
-    os.makedirs(models_dir, exist_ok=True)
-
-vae_name = 'DenseVAE'
-encoder_name = 'DenseEncoder'
-decoder_name = 'DenseDecoder'
-
-vae.save_vae(f'{models_dir}/{vae_name}')
-vae.save_encoder(f'{models_dir}/{encoder_name}')
-vae.save_decoder(f'{models_dir}/{decoder_name}')
+model_name = f'DenseVAE'
+model_path = f'{models_dir}/{model_name}'
+vae = keras.models.load_model(model_path)
+###############################################################################
+#
 ###############################################################################
 tf = time.time()
 print(f'Running time: {tf-ti:.2f}')
