@@ -29,7 +29,8 @@ if os.path.exists(fpath):
 
     print(f'Loading training set: {fname}')
 
-    training_set =  np.load(f'{fpath}', mmap_mode='r')
+    training_set =  np.load(f'{fpath}')
+    np.random.shuffle(training_set)
 
 else:
     print(f'There is no file: {fname}')
@@ -48,13 +49,14 @@ n_layers_decoder = [110, 549]
 
 # Other parameters
 # 1% to take advantage of stochastic part of stochastic gradient descent
-batch_size = int(n_galaxies*0.01)
+batch_size = int(n_galaxies*0.1)
 print(f'Batch size is: {batch_size}')
 
 epochs = 20
+learning_rate = 0.001
 # DenseVAEv2
 vae = DenseVAE(n_input_dimensions, n_layers_encoder, n_latent_dimensions,
-    n_layers_decoder, batch_size, epochs)
+    n_layers_decoder, batch_size, epochs, learning_rate)
 
 vae.summary()
 ###############################################################################

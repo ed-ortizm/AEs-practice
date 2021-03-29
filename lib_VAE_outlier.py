@@ -48,7 +48,7 @@ class DenseVAE:
     ############################################################################
     def __init__(self, n_input_dimensions:'int', n_layers_encoder: 'list',
         n_latent_dimensions:'int', n_layers_decoder: 'list', batch_size:'int',
-        epochs:'int')->'None':
+        epochs:'int', learning_rate:'float')->'None':
 
 
         self.n_input_dimensions = n_input_dimensions
@@ -72,13 +72,14 @@ class DenseVAE:
 
         self.loss = self.vae_loss()
 
+        self.learning_rate = learning_rate
         self.vae = self.build_vae()
     ############################################################################
     def build_vae(self):
 
         vae = Model(self.inputs, self.decoder(self.encoder(self.inputs)),
             name='DenseVAE')
-        adam_optimizer = tf.keras.optimizers.Adam(learning_rate=0.0001)
+        adam_optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rate)
         vae.compile(loss=self.loss, optimizer=adam_optimizer)
         return vae
     ############################################################################
@@ -89,10 +90,10 @@ class DenseVAE:
 
         for idx, n_units in enumerate(self.n_layers_encoder):
 
-            w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
+            #w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
 
             layer = Dense(n_units, name=f'encoder_layer_{idx+1}',
-                          activation='relu', kernel_initializer=w_init)(X)
+                          activation='relu')(X) #, kernel_initializer=w_init)(X)
 
             X = layer
 
@@ -109,17 +110,13 @@ class DenseVAE:
 
         std_dev = np.sqrt(2. / n_units)
 
-        w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
+       # w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
 
-        self.latent_mu = Dense(self.n_latent_dimensions, name='latent_mu',
-            kernel_initializer=w_init)(X)
+        self.latent_mu = Dense(self.n_latent_dimensions, name='latent_mu')(X) #,
+            #kernel_initializer=w_init)(X)
 
         self.latent_ln_sigma = Dense(self.n_latent_dimensions,
-            name='latent_ln_sigma', kernel_initializer=w_init)(X)
-
-        # latent = Lambda(self._sample_latent_features,
-        #                 output_shape=(self.n_latent_dimensions,),
-        #                 name='latent')([self.latent_mu, self.latent_ln_sigma])
+            name='latent_ln_sigma')(X) #, kernel_initializer=w_init)(X)
 
         ########################################################################
         # def _sample_latent_features(self, distribution):
@@ -150,11 +147,11 @@ class DenseVAE:
 
         for idx, n_units in enumerate(self.n_layers_decoder):
 
-            w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
+           # w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
             std_dev = np.sqrt(2./n_units)
 
             layer = Dense(n_units, name=f'layer_{idx+1}_decoder',
-                          activation='relu', kernel_initializer=w_init)(X)
+                          activation='relu')(X) #, kernel_initializer=w_init)(X)
 
             X = layer
 
@@ -169,10 +166,10 @@ class DenseVAE:
 
         std_dev = np.sqrt(2./n_units)
 
-        w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
+        #w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
 
-        output_layer = Dense(self.n_input_dimensions, name='decoder_output',
-            kernel_initializer=w_init)(X)
+        output_layer = Dense(self.n_input_dimensions, name='decoder_output')(X) #,
+            #kernel_initializer=w_init)(X)
 
         return output_layer
     ############################################################################
