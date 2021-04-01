@@ -6,6 +6,7 @@
 # Heavy data
 *.csv
 *.txt
+models/*
 !requirements.txt
 # Astronomical data
 *.fit

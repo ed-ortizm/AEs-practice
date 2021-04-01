@@ -52,7 +52,7 @@ n_layers_decoder = [100, 600]
 batch_size = int(n_galaxies*0.01)
 print(f'Batch size is: {batch_size}')
 
-epochs = 5
+epochs = 20
 learning_rate = 0.001 # default: 0.001
 loss = 'mse'
 
