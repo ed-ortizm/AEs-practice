@@ -37,13 +37,13 @@ else:
 ###############################################################################
 # Loading AEs predicted data for outlier detection
 
-reconstructed_set_name = f'{training_set_name}_reconstructed'
+reconstructed_set_name = f'{training_set_name}_reconstructed_{layers_str}'
 if local:
     reconstructed_set_name = f'{reconstructed_set_name}_local'
 
 reconstructed_set_path = f'{generated_data_dir}/{reconstructed_set_name}.npy'
 
-if os.path.exists(reconstructed_set_path):
+if os.path.exists(f'{reconstructed_set_path}'):
 
     print(f'Loading reconstructed data set: {reconstructed_set_name}\n')
 
@@ -95,9 +95,9 @@ for metric in metrics:
     ############################################################################
     print(f'Loading outlier scores')
 
-    o_score_name = f'{metric}_o_score'
-    fname_normal = f'most_normal_ids_{metric}'
-    fname_outliers = f'most_outlying_ids_{metric}'
+    o_score_name = f'{metric}_o_score_{layers_str}'
+    fname_normal = f'most_normal_ids_{metric}_{layers_str}'
+    fname_outliers = f'most_outlying_ids_{metric}_{layers_str}'
 
     if local:
         o_score_name = f'{o_score_name}_local'
@@ -112,7 +112,8 @@ for metric in metrics:
     else:
 
         o_scores = outlier.score(O=training_set[:, :-5], R=reconstructed_set)
-        np.save(f'{generated_data_dir}/{o_score_name}.npy', o_scores)
+        np.save(f'{generated_data_dir}/{o_score_name}.npy',
+            o_scores)
     ############################################################################
     #Selecting top outliers
     print(f'Computing top reconstructions for {metric} metric\n')

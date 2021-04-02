@@ -38,10 +38,10 @@ n_input_dimensions = training_set[:, :-5].shape[1]
 n_latent_dimensions = 5
 ###########################################
 # encoder
-n_layers_encoder = [500, 50]
+n_layers_encoder = [100, 50]
 
 # decoder
-n_layers_decoder = [50, 500]
+n_layers_decoder = [50, 100]
 
 # Other parameters
 # 1% to take advantage of stochastic part of stochastic gradient descent
