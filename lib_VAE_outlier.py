@@ -190,7 +190,7 @@ class AEDense:
         w_init = keras.initializers.RandomNormal(mean=0., stddev=std_dev)
 
         output_layer = Dense(self.n_input_dimensions, name='decoder_output',
-        activation='relu', kernel_initializer=w_init)(X)
+        kernel_initializer=w_init)(X)
 
         return output_layer
     ############################################################################
@@ -198,26 +198,6 @@ class AEDense:
 
         self.ae.fit(x=spectra, y=spectra, epochs=self.epochs,
             batch_size=self.batch_size, verbose=1)
-    ############################################################################
-    def predict(self, spectra:'2D np.array')-> '2D np.array':
-
-        if spectra.ndim == 1:
-            spectra = spectra.reshape(1, -1)
-
-        return self.ae.predict(spectra)
-    ############################################################################
-    def encode(self, spectra:'2D np.array')-> '2D np.array':
-
-        if spectra.ndim == 1:
-            spectra = spectra.reshape(1, -1)
-        return self.encoder(spectra)
-    ############################################################################
-    def decode(self, coding:'2D np.array')->'2D np.aray':
-
-        if coding.ndim==1:
-            coding = coding.reshape(1,-1)
-
-        return self.decoder(coding)
     ############################################################################
     def save_ae(self, fpath:'str'):
 
