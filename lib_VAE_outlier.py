@@ -18,6 +18,18 @@ from tensorflow.keras.utils import plot_model
 from constants_VAE_outlier import normalization_schemes
 from constants_VAE_outlier import spectra_dir
 ###############################################################################
+def load_data(file_name, file_path):
+
+    if os.path.exists(file_path):
+
+        print(f'Loading: {file_name}')
+
+        return np.load(f'{file_path}')
+
+    else:
+        print(f'There is no file: {file_name}')
+        sys.exit()
+###############################################################################
 def input_handler(script_arguments:'list'):
 
     local = script_arguments[1]=='local'

@@ -9,7 +9,7 @@ import numpy as np
 
 from constants_VAE_outlier import spectra_dir, working_dir
 # from lib_VAE_outlier import AEDense
-# from lib_VAE_outlier import input_handler
+from lib_VAE_outlier import load_data
 ###############################################################################
 ti = time.time()
 ###############################################################################
@@ -19,9 +19,11 @@ parser.add_argument('--learning_rate', '-lr', type=float)
 parser.add_argument('--batch_size','-bs', type=int)
 parser.add_argument('--server', '-s', type=str)
 parser.add_argument('--number_spectra','-n_spec', type=int)
-parser.add_argument('--architecture', type=str)
+parser.add_argument('--encoder_layers', type=str)
+parser.add_argument('--decoder_layers', type=str)
 parser.add_argument('--normalization_type', '-n_type', type=str)
-
+parser.add_argument('--latent_dimensions', '-lat_dims', type=int)
+parser.add_argument('--epochs', type=int)
 
 script_arguments = parser.parse_args()
 
@@ -30,58 +32,32 @@ number_spectra = script_arguments.number_spectra
 normalization_type = script_arguments.normalization_type
 local = script_arguments.server == 'local'
 
-layers_list = [int(number_units) for number_units
-    in script_arguments.architecture.split('_')]
+number_latent_dimensions = script_arguments.latent_dimensions
 
-number_layers_list = len(layers_list)
-# ###############################################################################
-# # Relevant directories
-# training_data_dir = f'{spectra_dir}/normalized_data'
-# ###############################################################################
-# # Loading training data
-# f_name = f'spectra_{number_spectra}_{normalization_type}.npy'
-# f_path = f'{training_data_dir}/{fname}'
-#
-# if os.path.exists(fpath):
-#
-#     print(f'Loading training set: {fname}')
-#
-#     training_set =  np.load(f'{fpath}')
-#     np.random.shuffle(training_set)
-#
-# else:
-#     print(f'There is no file: {fname}')
-#     sys.exit()
-# ###############################################################################
-# # Parameters for the AEDense
-# n_galaxies = training_set.shape[0]
-# n_input_dimensions = training_set[:, :-5].shape[1]
-# n_middle = int((n_layers_list-1)/2)
-# n_latent_dimensions = layers_list[n_middle]
-# print(f'n_latent: {n_latent_dimensions}')
-# ###########################################
-# # encoder
-# n_layers_encoder = layers_list[ : n_middle]
-# print(f'n_encoder: {n_layers_encoder}')
-# # decoder
-# n_layers_decoder = layers_list[n_middle+1 : ]
-# print(f'n_decoder: {n_layers_decoder}')
-#
-# # Other parameters
-# # 1% to take advantage of stochastic part of stochastic gradient descent
-# batch_size = int(sys.argv[5])
-# print(f'Batch size is: {batch_size}')
-#
-# if local:
-#     epochs = 5
-# else:
-#     epochs = 15
-#
-# learning_rate = float(sys.argv[6]) # default: 0.001
+layers_encoder = [int(number_units) for number_units
+    in script_arguments.encoder_layers.split('_')]
+
+layers_decoder = [int(number_units) for number_units
+    in script_arguments.decoder_layers.split('_')]
+
+ epochs = script_arguments.epochs
+################################################################################
+# Relevant directories
+training_data_dir = f'{spectra_dir}/normalized_data'
+################################################################################
+# Loading training data
+file_name = f'spectra_{number_spectra}_{normalization_type}'
+file_path = f'{training_data_dir}/{file_name}.npy'
+training_set = load_data(file_name, file_path)
+np.random.shuffle(training_set)
+################################################################################
+# Parameters for the AEDense
+number_input_dimensions = training_set[:, :-5].shape[1]
+###########################################
 # loss = 'mse'
 #
-# ae = AEDense(n_input_dimensions, n_layers_encoder, n_latent_dimensions,
-#     n_layers_decoder, batch_size, epochs, learning_rate, loss)
+# ae = AEDense(n_input_dimensions, layers_encoder, n_latent_dimensions,
+#     layers_decoder, batch_size, epochs, learning_rate, loss)
 #
 # ae.summary()
 # ###############################################################################
@@ -97,8 +73,8 @@ number_layers_list = len(layers_list)
 #     os.makedirs(models_dir)
 # # Models names
 # # layers for name
-# layers_encoder_str = '_'.join(str(unit) for unit in n_layers_encoder)
-# layers_decoder_str = '_'.join(str(unit) for unit in n_layers_decoder)
+# layers_encoder_str = '_'.join(str(unit) for unit in layers_encoder)
+# layers_decoder_str = '_'.join(str(unit) for unit in layers_decoder)
 # layers_str = f'{layers_encoder_str}_{n_latent_dimensions}_{layers_decoder_str}'
 #
 # models_dir = f'{models_dir}/{layers_str}'
@@ -106,9 +82,9 @@ number_layers_list = len(layers_list)
 # if not os.path.exists(models_dir):
 #     os.makedirs(models_dir)
 #
-# ae_name = f'DenseAE_{loss}_{n_galaxies}_{layers_str}'
-# encoder_name = f'DenseEncoder_{loss}_{n_galaxies}_{layers_str}'
-# decoder_name = f'DenseDecoder_{loss}_{n_galaxies}_{layers_str}'
+# ae_name = f'DenseAE_{loss}_{number_spectra}_{layers_str}'
+# encoder_name = f'DenseEncoder_{loss}_{number_spectra}_{layers_str}'
+# decoder_name = f'DenseDecoder_{loss}_{number_spectra}_{layers_str}'
 #
 # if local:
 #
