@@ -88,19 +88,51 @@ for metric in metrics:
         np.save(
         f'{generated_data_dir}/{o_scores_name}.npy', o_scores)
     ############################################################################
-        most_normal_ids, most_outlying_ids = outlier.top_reconstructions(
+        normal_ids, outlier_ids = outlier.top_reconstructions(
             scores=o_scores, n_top_spectra=number_top_spectra)
 
         print('Saving top outliers IDs')
         ########################################################################
         normal_name = (f'{metric}_normal_ids_{percentage}_'
             f'nTop_{number_top_spectra}_{tail_outlier_name}')
-        np.save(f'{generated_data_dir}/{normal_name}.npy', most_normal_ids)
+        np.save(f'{generated_data_dir}/{normal_name}.npy', normal_ids)
         ########################################################################
         outlier_name = (f'{metric}_outlier_ids_{percentage}_'
             f'nTop_{number_top_spectra}_{tail_outlier_name}')
-        np.save(f'{generated_data_dir}/{outlier_name}.npy', most_outlying_ids)
+        np.save(f'{generated_data_dir}/{outlier_name}.npy', outlier_ids)
     ############################################################################
+        spec_top_outliers_name = (f'{metric}_outlier_spectra_{percentage}_'
+            f'nTop_{number_top_spectra}_{tail_outlier_name}')
+
+        spec_top_outliers = training_set[outlier_ids]
+
+        np.save(f'{generated_data_dir}/{spec_top_outliers_name}.npy',
+            spec_top_outliers)
+        ########################################################################
+        R_top_outliers_name = (f'{metric}_outlier_reconstructed_spectra_'
+            f'{percentage}_nTop_{number_top_spectra}_{tail_outlier_name}')
+
+        R_top_outliers = reconstructed_set[outlier_ids]
+
+        np.save(f'{generated_data_dir}/{R_top_outliers_name}.npy',
+            R_top_outliers)
+        ########################################################################
+        spec_top_normal_name = (f'{metric}_normal_spectra_{percentage}_'
+            f'nTop_{number_top_spectra}_{tail_outlier_name}')
+
+        spec_top_normal = training_set[normal_ids]
+
+        np.save(f'{generated_data_dir}/{spec_top_normal_name}.npy',
+            spec_top_normal)
+        ########################################################################
+        R_top_normal_name = (f'{metric}_normal_reconstructed_spectra_'
+            f'{percentage}_nTop_{number_top_spectra}_{tail_outlier_name}')
+
+        R_top_normal = reconstructed_set[normal_ids]
+
+        np.save(f'{generated_data_dir}/{R_top_normal_name}.npy',
+            R_top_normal)
+        ############################################################################
     ############################################################################
 ###############################################################################
 tf = time.time()
