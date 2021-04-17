@@ -118,7 +118,7 @@ if local:
     reconstructed_set_name = f'{reconstructed_set_name}_local'
 
 reconstructed_set_path = f'{generated_data_dir}/{reconstructed_set_name}.npy'
-
+print(reconstructed_set_path)
 reconstructed_set = ae.predict(training_set[:, :-5])
 
 print(f'Saving reconstructed training set')
