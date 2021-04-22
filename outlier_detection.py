@@ -76,7 +76,7 @@ if local:
 for metric in metrics:
     outlier = Outlier(metric=metric)
     ############################################################################
-    percentages = [0.25, 0.5, 0.75, 1.0]
+    percentages = [0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0]
     outlier_scores = outlier.score(O=training_set[:, :-5],
         R=reconstructed_set, percentages=percentages)
 
