@@ -8,7 +8,7 @@ class Outlier:
     tensorflow.keras
     """
     ############################################################################
-    def __init__(self, metric:'str'='mse', p:'float'=0.25):
+    def __init__(self, metric:'str'='mse', p:'float'=0.25, epsilon=1E-3):
         """
         Init fucntion
 
@@ -27,43 +27,30 @@ class Outlier:
             self.p = p
         else:
             self.p = False
+
+        self.epsilon = epsilon
     ############################################################################
     def score(self, O, R, percentages):
-        """
-        Computes the outlier score according to the metric used to instantiate
-        the class.
-
-        Args:
-            O: (2D np.array) with the original objects where index 0 indicates
-            the object and index 1 the features of the object.
-
-            R: (2D np.array) with the reconstructed objects where index 0
-            indicates the object and index 1 the features of the object.
-
-        Returns:
-            A one dimensional numpy array with the outlier scores for objects
-            present in O
-        """
-
         # check if I can use a dict or anything to avoid to much typing
+        print(f'Computing {self.metric} scores')
 
         if self.metric == 'mse':
-            print(f'Computing the outlier scores')
             return self._mse(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'chi2':
-            return self._chi2(O=O, R=R)
+        elif self.metric == 'mse_relative':
+            return self._mse_relative(O=O, R=R, percentages=percentages)
 
         elif self.metric == 'mad':
-            return self._mad(O=O, R=R)
+            return self._mad(O=O, R=R, percentages=percentages)
+
+        elif self.metric == 'mad_relative':
+            return self._mad_relative(O=O, R=R, percentages=percentages)
 
         elif self.metric == 'lp':
+            return self._lp(O=O, R=R, percentages=percentages)
 
-            if self.p == 'p' or self.p <= 0:
-                print(f'For the {self.metric} metric you need p')
-                return None
-
-            return self._lp(O=O, R=R)
+        elif self.metric == 'lp_relative':
+            return self._lp_relative(O=O, R=R, percentages=percentages)
 
         else:
             print(f'The provided metric: {self.metric} is not implemented yet')
@@ -72,138 +59,157 @@ class Outlier:
 # Mahalanobis, Canberra, Braycurtis, and KL-divergence
     ############################################################################
     def _mse(self, O, R, percentages):
-        """
-        Computes the mean square error for the reconstruction of the input
-        objects
 
-        Args:
-            O: (2D np.array) with the original objects where index 0 denotes
-                indicates the objec and index 1 the features of the object.
-
-            R: Reconstruction of O by (tensorflow.keras model) the generative
-            model
-
-        Returns:
-            A one dimensional numpy array with the mean square error for objects
-            present in O
-        """
-
-        outlier_scores = []
+        scores = []
         for percentage in percentages:
 
-            # mse = np.square(R - O)
-            mse = np.abs(R - O)/np.abs(O)
+            reconstruction = np.square(R - O)
 
-            number_outlier_fluxes = int(0.01*percentage*mse.shape[1])
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
 
-            highest_mse = np.argpartition(
-                mse, -1 * number_outlier_fluxes,
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
                 axis=1)[:, -1 * number_outlier_fluxes:]
 
-            score = np.empty(highest_mse.shape)
+            score = np.empty(largest_reconstruction_ids.shape)
 
-            for n, idx in enumerate(highest_mse):
+            for n, idx in enumerate(largest_reconstruction_ids):
 
-                score[n, :] = mse[n, idx]
+                score[n, :] = reconstruction[n, idx]
 
-            outlier_scores.append(score.sum(axis=1))
+            scores.append(score.sum(axis=1))
 
-        return outlier_scores
+        return scores
     ############################################################################
-    def _chi2(self, O, R):
-        """
-        Computes the chi square error for the reconstruction of the input
-        objects
+    def _mse_relative(self, O, R, percentages):
 
-        Args:
-            O: (2D np.array) with the original objects where index 0 denotes
-                indicates the objec and index 1 the features of the object.
+        scores = []
+        for percentage in percentages:
 
-            R: Reconstruction of O by (tensorflow.keras model) the generative
-            model
+            reconstruction = np.square( (R - O)/(O + self.epsilon) )
 
-        Returns:
-            A one dimensional numpy array with the chi square error for objects
-            present in O
-        """
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
 
-        return (np.square(R - O) * (1 / np.abs(O))).sum(axis=1)
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
+                axis=1)[:, -1 * number_outlier_fluxes:]
+
+            score = np.empty(largest_reconstruction_ids.shape)
+
+            for n, idx in enumerate(largest_reconstruction_ids):
+
+                score[n, :] = reconstruction[n, idx]
+
+            scores.append(score.sum(axis=1))
+
+        return scores
     ############################################################################
-    def _mad(self, O, R):
-        """
-        Computes the maximum absolute deviation from the reconstruction of the
-        input objects
-
-        Args:
-            O: (2D np.array) with the original objects where index 0 denotes
-                indicates the objec and index 1 the features of the object.
-
-            R: Reconstruction of O by (tensorflow.keras model) the generative
-            model
-
-        Returns:
-            A one dimensional numpy array with the maximum absolute deviation
-            from the objects present in O
-        """
-
-        return np.abs(R - O)*(1 / np.abs(O)).sum(axis=1)
     ############################################################################
-    def _lp(self, O, R):
-        """
-        Computes the lp distance from the reconstruction of the input objects
+    def _mad(self, O, R, percentages):
 
-        Args:
-            O: (2D np.array) with the original objects where index 0 denotes
-                indicates the objec and index 1 the features of the object.
+        scores = []
+        for percentage in percentages:
 
-            R: Reconstruction of O by (tensorflow.keras model) the generative
-            model
+            reconstruction = np.abs(R - O)
 
-        Returns:
-            A one dimensional numpy array with the lp distance from the objects
-            present in O
-        """
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
 
-        return (np.sum((np.abs(R - O))**self.p, axis=1))**(1 / self.p)
-# gotta code conditionals to make sure that the user inputs a "good one"
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
+                axis=1)[:, -1 * number_outlier_fluxes:]
+
+            score = np.empty(largest_reconstruction_ids.shape)
+
+            for n, idx in enumerate(largest_reconstruction_ids):
+
+                score[n, :] = reconstruction[n, idx]
+
+            scores.append(score.sum(axis=1))
+
+        return scores
     ############################################################################
-    def user_metric(self, custom_metric, O, R):
-        """
-        Computes the custom metric for the reconstruction of the input objects
-        as defined by the user
+    def _mad_relative(self, O, R, percentages):
 
-        Args:
-            O: (2D np.array) with the original objects where index 0 denotes
-                indicates the objec and index 1 the features of the object.
+        scores = []
+        for percentage in percentages:
 
-            R: Reconstruction of O by (tensorflow.keras model) the generative
-            model
+            reconstruction = np.abs( (R - O)/(O + self.epsilon) )
 
-        Returns:
-            A one dimensional numpy array with the score produced by the user
-            defiend metric of objects present in O
-        """
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
 
-        return self.custom_metric(O, R)
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
+                axis=1)[:, -1 * number_outlier_fluxes:]
+
+            score = np.empty(largest_reconstruction_ids.shape)
+
+            for n, idx in enumerate(largest_reconstruction_ids):
+
+                score[n, :] = reconstruction[n, idx]
+
+            scores.append(score.sum(axis=1))
+
+        return scores
+    ############################################################################
+    ############################################################################
+    def _lp(self, O, R, percentages):
+
+        scores = []
+        for percentage in percentages:
+
+            reconstruction = np.abs(R - O)**self.p
+
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
+                axis=1)[:, -1 * number_outlier_fluxes:]
+
+            score = np.empty(largest_reconstruction_ids.shape)
+
+            for n, idx in enumerate(largest_reconstruction_ids):
+
+                score[n, :] = reconstruction[n, idx]
+
+            score = np.sum(score, axis=1)**(1 / self.p)
+
+            scores.append(score))
+
+        return scores
+    ############################################################################
+    def _lp_relative(self, O, R, percentages):
+
+        scores = []
+        for percentage in percentages:
+
+            reconstruction = np.abs( (R - O)/(O + self.epsilon) )**self.p
+
+            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+
+            largest_reconstruction_ids = np.argpartition(
+                reconstruction,
+                -1 * number_outlier_fluxes,
+                axis=1)[:, -1 * number_outlier_fluxes:]
+
+            score = np.empty(largest_reconstruction_ids.shape)
+
+            for n, idx in enumerate(largest_reconstruction_ids):
+
+                score[n, :] = reconstruction[n, idx]
+
+            score = np.sum(score, axis=1)**(1 / self.p)
+
+            scores.append(score.sum(axis=1))
+
+        return scores
+    ############################################################################
     ############################################################################
     def top_reconstructions(self, scores, n_top_spectra):
-        """
-        Selects the most normal and outlying objecs
-
-        Args:
-            scores: (1D np.array) outlier scores
-
-            n_top_spectra: (int > 0) this parameter controls the number of
-                objects identifiers to return for the top reconstruction,
-                that is, the idices for the most oulying and the most normal
-                objects.
-
-        Returns:
-            most_normal, most_oulying: (1D np.array, 1D np.array) numpy arrays
-                with the location indexes of the most normal and outlying
-                object in the training (and pred) set.
-        """
-
         spec_idxs = np.argpartition(scores,
             [n_top_spectra, -1 * n_top_spectra])
 
