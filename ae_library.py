@@ -27,8 +27,14 @@ class VariationalAE:
     ############################################################################
     def __init__(self,
         input_dimensions:'int',
-        encoder_units:'list', latent_dimensions:'int', decoder_units:'list',
-        batch_size:'int', epochs:'int', learning_rate:'float')->'None':
+        encoder_units:'list',
+        latent_dimensions:'int',
+        decoder_units:'list',
+        batch_size:'int',
+        epochs:'int',
+        learning_rate:'float',
+        beta_kl_loss:'float'=1.,
+        beta_reconstruction_loss:'float'=1.)->'tf.keras.model':
         """
         Creates a variational auto encoder
 
@@ -43,6 +49,8 @@ class VariationalAE:
             batch_size: number of batches for the training set
             epochs: maximum number of epochs to train the algorithm
             learning_rate: value for the learning rate
+            beta_kl_loss: weighting factor for the kl loss
+            beta_reconstruction_loss: weighting factor for the reconstruction loss
         """
 
         self.input_dimensions = input_dimensions
@@ -58,6 +66,9 @@ class VariationalAE:
         self.batch_size = batch_size
         self.epochs = epochs
         self.learning_rate = learning_rate
+
+        self.beta_kl = beta_kl_loss * (latent_dimensions/input_dimensions)
+        self.beta_reconstruction = beta_reconstruction_loss / input_dimensions
 
         self.encoder = None
         self.z = None
@@ -93,7 +104,6 @@ class VariationalAE:
 
         return vae
     ############################################################################
-    # def standard_loss(self, y_true, y_pred)->'keras.custom_loss':
     def standard_loss(self, z_mean, z_log_sigma)->'keras.custom_loss':
         """
         Standard loss function for the variational auto encoder, that is,
@@ -111,10 +121,11 @@ class VariationalAE:
         def loss(y_true, y_pred):
 
             mse = K.sum(K.square(y_true - y_pred), axis=-1)
+            mse *= self.input_dimensions
             kl = 1 + z_log_sigma - K.square(z_mean) - K.exp(z_log_sigma)
             kl = (-0.5) * K.sum(kl, axis=-1)
 
-            return mse + kl
+            return self.beta_reconstruction * mse + self.beta_kl * kl
 
         return loss
     ############################################################################
