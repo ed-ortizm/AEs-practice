@@ -4,6 +4,7 @@ import os
 import time
 
 import numpy as np
+from sklearn.utils import shuffle
 
 from ae_library import VariationalAE
 ###############################################################################
@@ -51,6 +52,10 @@ vae = VariationalAE(input_dimensions=number_input_dimensions,
 vae.summary()
 ###############################################################################
 # Loading training data
+# X =
+# X = shuffle(X, random_state=0)
+history = vae.fit(X)
+Y = vae.predict(X)
 ###############################################################################
 # Training the model
 

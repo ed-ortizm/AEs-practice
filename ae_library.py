@@ -33,6 +33,7 @@ class VariationalAE:
         batch_size:'int',
         epochs:'int',
         learning_rate:'float',
+        output_activation:'str'='linear',
         beta_kl_loss:'float'=1.,
         beta_reconstruction_loss:'float'=1.)->'tf.keras.model':
         """
@@ -49,6 +50,7 @@ class VariationalAE:
             batch_size: number of batches for the training set
             epochs: maximum number of epochs to train the algorithm
             learning_rate: value for the learning rate
+            output_activation:
             beta_kl_loss: weighting factor for the kl loss
             beta_reconstruction_loss: weighting factor for the reconstruction loss
         """
@@ -66,6 +68,8 @@ class VariationalAE:
         self.batch_size = batch_size
         self.epochs = epochs
         self.learning_rate = learning_rate
+
+        self.out_activation = output_activation
 
         self.beta_kl = beta_kl_loss * (latent_dimensions/input_dimensions)
         self.beta_reconstruction = beta_reconstruction_loss / input_dimensions
@@ -144,19 +148,25 @@ class VariationalAE:
                 mean=0.,
                 stddev=standard_deviation)
 
-            layer = Dense(units, activation='relu',
+            layer = Dense(units,
+                activation='relu',
                 kernel_initializer=initial_weights,
                 name=f'encoder_{idx+1}')(X)
 
             X = layer
             standard_deviation = np.sqrt(2. / units)
             ####################################################################
-        z_mean = Dense(self.latent_dimensions, name='z_mean',
-                kernel_initializer=initial_weights)(X)
+        z_mean = Dense(self.latent_dimensions,
+            activation='relu',
+            name='z_mean',
+            kernel_initializer=initial_weights
+            )(X)
 
         z_log_sigma = Dense(self.latent_dimensions,
-                name='z_log_sigma',
-                kernel_initializer=initial_weights)(X)
+            activation='relu',
+            name='z_log_sigma',
+            kernel_initializer=initial_weights
+            )(X)
 
         z = self.sampling(z_mean, z_log_sigma)
         ########################################################################
@@ -190,11 +200,14 @@ class VariationalAE:
         for idx, units in enumerate(self.decoder_units):
 
             initial_weights = tf.keras.initializers.RandomNormal(
-                mean=0., stddev=standard_deviation)
+                mean=0.,
+                stddev=standard_deviation)
 
-            layer = Dense(units, activation='relu',
+            layer = Dense(units,
+                activation='relu',
                 kernel_initializer=initial_weights,
-                name=f'decoder_{idx+1}')(X)
+                name=f'decoder_{idx+1}'
+                )(X)
 
             X = layer
             standard_deviation = np.sqrt(2./units)
@@ -202,6 +215,7 @@ class VariationalAE:
             # if units == self.decoder_units[-1]:
         ########################################################################
         decoder_output = Dense(self.input_dimensions,
+            activation=self.out_activation
             kernel_initializer=initial_weights,
             name='decoder_output')(X)
 
