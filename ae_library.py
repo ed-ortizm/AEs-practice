@@ -157,13 +157,11 @@ class VariationalAE:
             standard_deviation = np.sqrt(2. / units)
             ####################################################################
         z_mean = Dense(self.latent_dimensions,
-            activation='relu',
             name='z_mean',
             kernel_initializer=initial_weights
             )(X)
 
         z_log_sigma = Dense(self.latent_dimensions,
-            activation='relu',
             name='z_log_sigma',
             kernel_initializer=initial_weights
             )(X)
@@ -172,8 +170,6 @@ class VariationalAE:
         ########################################################################
         encoder = Model(self.input_layer, [z_mean, z_log_sigma, z],
             name='variational_encoder')
-
-        # encoder = Model(self.input_layer, X, name='variational_encoder')
 
         return encoder
     ############################################################################
