@@ -5,7 +5,6 @@ import sys
 import time
 ################################################################################
 import numpy as np
-from sklearn.utils import shuffle
 ################################################################################
 parser = ConfigParser(interpolation=ExtendedInterpolation())
 parser.read('vae.ini')
@@ -14,56 +13,58 @@ parser.read('vae.ini')
 work_directory = parser.get('directories', 'work')
 sys.path.insert(0, f'{work_directory}')
 ################################################################################
-from src.vae import VariationalAE
+from src.vae import VAE
 ################################################################################
 ti = time.time()
 ################################################################################
-
+# load data
 data_directory = parser.get('directories', 'train')
-output_directory = parser.get('directories', 'output')
+data_name = parser.get('files', 'train')
+data = np.load(f'{data_directory}/{data_name}')
+input_dimensions = data.shape[1]
 ############################################################################
 # network architecture
-encoder_str = parser.get('architecture', 'encoder')
-encoder = [int(units) for units in encoder_str.split('_')]
+encoder_units = parser.get('architecture', 'encoder')
+encoder_units = [int(units) for units in encoder_units.split('_')]
 
 latent_dimensions = parser.getint('architecture', 'latent_dimensions')
 
-decoder_str = parser.get('architecture', 'decoder')
-decoder = [int(units) for units in decoder_str.split('_')]
-
-architecture_str = f'{encoder_str}_{latent_dimensions}_{decoder_str}'
+decoder_units = parser.get('architecture', 'decoder')
+decoder_units = [int(units) for units in decoder_units.split('_')]
 ############################################################################
 # network hyperparameters
 learning_rate = parser.getfloat('hyper-parameters', 'learning_rate')
 batch_size = parser.getint('hyper-parameters', 'batch_size')
 epochs = parser.getint('hyper-parameters', 'epochs')
-############################################################################
-# data parameters
-number_spectra = parser.getint('parameters', 'spectra')
+
+reconstruction_weight = parser.getint(
+                                        'hyper-parameters',
+                                        'reconstruction_weight'
+                                        )
 ################################################################################
-number_input_dimensions = 3000
-vae = VariationalAE(input_dimensions=number_input_dimensions,
-        encoder_units=encoder,
-        latent_dimensions=latent_dimensions,
-        decoder_units=decoder,
-        batch_size=batch_size, epochs=epochs, learning_rate=learning_rate)
+vae = VAE(
+    input_dimensions=input_dimensions,
+    encoder_units=encoder_units,
+    latent_dimensions=latent_dimensions,
+    decoder_units=decoder_units,
+    batch_size=batch_size,
+    epochs=epochs,
+    learning_rate=learning_rate,
+    reconstruction_loss_weight=reconstruction_weight
+    )
 
 vae.summary()
-###############################################################################
-# Loading training data
-# X =
-# X = shuffle(X, random_state=0)
-# history = vae.fit(X)
-# Y = vae.predict(X)
-###############################################################################
+################################################################################
 # Training the model
-
-# history = vae.fit(spectra=training_set[:, :-5])
-###############################################################################
-# save the model once it is trained
+history = vae.train(data)
+# save model
 models_directory = parser.get('directories', 'models')
+
 if not os.path.exists(models_directory):
     os.makedirs(models_directory)
+###############################################################################
+# save the model once it is trained
+
 # Defining directorie to save the model once it is trained
 # vae_name = 'DenseVAE'
 # encoder_name = 'DenseEncoder'
