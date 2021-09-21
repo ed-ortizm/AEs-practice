@@ -133,8 +133,7 @@ class VAE:
         self.model.compile(
             optimizer=optimizer,
             loss=self._loss,
-            metrics=['accuracy', 'mse']
-            # metrics=[self._loss, self._kl_loss]
+            metrics=['mse']#, self._kl_loss]
         )
     ############################################################################
     def _loss(self, y_target, y_predicted):
