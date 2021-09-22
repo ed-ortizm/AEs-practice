@@ -202,7 +202,7 @@ class CVAE:
         reshape_layer = Reshape(self._shape_before_latent)(dense_layer)
 
         decoder_block = self._add_transpose_convolutional_block(
-            input=decoder_input
+            input=reshape_layer
         )
 
         decoder_output = self._output_layer(decoder_block)
@@ -245,8 +245,8 @@ class CVAE:
 
         output_layer = Conv2DTranspose(
             filters=1,
-            kernel_size=self.decoder_kernels[0],
-            strides=self.decoder_strides[0],
+            kernel_size=self.decoder_kernels[-1],
+            strides=self.decoder_strides[-1],
             padding="same",
             name=f"decoder_output_layer"
         )
