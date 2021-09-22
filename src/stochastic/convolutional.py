@@ -86,21 +86,26 @@ class CVAE:
         self._build()
 
     ############################################################################
-    def reconstruct(self, spectra:'2D np.array')-> '2D np.array':
+    def reconstruct(self, spectra:'4D np.array')-> '2D np.array':
 
-        if spectra.ndim == 1:
-            spectra = spectra.reshape(1, -1)
+        spectra = self._update_dimensions(spectra)
 
         return self.model.predict(spectra)
     ############################################################################
     def encode(self, spectra:'2D np.array')-> '2D np.array':
 
-        if spectra.ndim == 1:
-            spectra = spectra.reshape(1, -1)
+        spectra = self._update_dimensions(spectra)
 
         z = self.encoder.predict(spectra)
 
         return z
+    ############################################################################
+    def _update_dimensions(self, x:'np.array'):
+
+        if x.ndim == 3:
+            x = x[np.newaxis, ...]
+
+        return x
     ############################################################################
     def decode(self, z:'2D np.array')->'2D np.aray':
 
