@@ -85,43 +85,43 @@ class CVAE:
 
         self._build()
 
-    # ############################################################################
-    # def reconstruct(self, spectra:'2D np.array')-> '2D np.array':
+    ############################################################################
+    def reconstruct(self, spectra:'2D np.array')-> '2D np.array':
 
-    #      if spectra.ndim == 1:
-    #         spectra = spectra.reshape(1, -1)
+        if spectra.ndim == 1:
+            spectra = spectra.reshape(1, -1)
 
-    #      return self.model.predict(spectra)
-    # ############################################################################
-    # def encode(self, spectra:'2D np.array')-> '2D np.array':
+        return self.model.predict(spectra)
+    ############################################################################
+    def encode(self, spectra:'2D np.array')-> '2D np.array':
 
-    #      if spectra.ndim == 1:
-    #         spectra = spectra.reshape(1, -1)
+        if spectra.ndim == 1:
+            spectra = spectra.reshape(1, -1)
 
-    #      z = self.encoder.predict(spectra)
+        z = self.encoder.predict(spectra)
 
-    #      return z
-    # ############################################################################
-    # def decode(self, z:'2D np.array')->'2D np.aray':
+        return z
+    ############################################################################
+    def decode(self, z:'2D np.array')->'2D np.aray':
 
-    #      if z.ndim==1:
-    #         coding = z.reshape(1,-1)
+         if z.ndim==1:
+            coding = z.reshape(1,-1)
 
-    #      spectra = self.decoder.predict(z)
+         spectra = self.decoder.predict(z)
 
-    #      return spectra
-    # ############################################################################
-    # def train(self, spectra):
+         return spectra
+    ############################################################################
+    def train(self, spectra):
 
-    #      self.model.fit(
-    #         x=spectra,
-    #         y=spectra,
-    #         batch_size=self.batch_size,
-    #         epochs=self.epochs,
-    #         verbose=2,
-    #         shuffle=True
-    #     )
-    # ############################################################################
+        self.model.fit(
+            x=spectra,
+            y=spectra,
+            batch_size=self.batch_size,
+            epochs=self.epochs,
+            verbose=2,
+            shuffle=True
+        )
+    ############################################################################
     def _build(self) -> "":
         """
         Builds and returns a compiled variational auto encoder using
@@ -131,59 +131,59 @@ class CVAE:
         self._build_encoder()
         self._build_decoder()
         self._build_ae()
-        # self._compile()
+        self._compile()
 
-    # ############################################################################
-    # def _compile(self):
-
-    #      optimizer = Adam(learning_rate=self.learning_rate)
-
-    #      self.model.compile(
-    #         optimizer=optimizer,
-    #         loss=self._loss,
-    #         metrics=['mse']#, self._kl_loss]
-    #     )
     ############################################################################
-    # def _loss(self, y_target, y_predicted):
-    #     """
-    #     Standard loss function for the variational auto encoder
-    #     , that is, for de reconstruction loss and the KL divergence.
+    def _compile(self):
 
-    #      # y_target, y_predicted: keep consistency with keras API
-    #     # a loss function expects this two parameters
+        optimizer = Adam(learning_rate=self.learning_rate)
 
-    #      INPUTS
-    #         y_true : input datapoint
-    #         y_pred : predicted value by the network
+        self.model.compile(
+            optimizer=optimizer,
+            loss=self._loss,
+            metrics=['mse']#, self._kl_loss]
+        )
+    ############################################################################
+    def _loss(self, y_target, y_predicted):
+        """
+        Standard loss function for the variational auto encoder
+        , that is, for de reconstruction loss and the KL divergence.
 
-    #      OUTPUT
-    #         loss function with the keras format that is compatible
-    #         with the .compile API
-    #     """
+         # y_target, y_predicted: keep consistency with keras API
+        # a loss function expects this two parameters
 
-    #      reconstruction_loss = self._reconstruction_loss(y_target, y_predicted)
-    #     kl_loss = self._kl_loss(y_target, y_predicted)
+         INPUTS
+            y_true : input datapoint
+            y_pred : predicted value by the network
 
-    #      loss = self.reconstruction_weight * reconstruction_loss + kl_loss
+         OUTPUT
+            loss function with the keras format that is compatible
+            with the .compile API
+        """
 
-    #      return loss
-    # ############################################################################
-    # def _reconstruction_loss(self, y_target, y_predicted):
+        reconstruction_loss = self._reconstruction_loss(y_target, y_predicted)
+        kl_loss = self._kl_loss(y_target, y_predicted)
 
-    #      error = y_target - y_predicted
-    #     reconstruction_loss = K.mean(K.square(error), axis=1)
+        loss = self.reconstruction_weight * reconstruction_loss + kl_loss
 
-    #      return reconstruction_loss
-    # ############################################################################
-    # def _kl_loss(self, y_target, y_predicted):
+        return loss
+    ############################################################################
+    def _reconstruction_loss(self, y_target, y_predicted):
 
-    #      kl_loss = -0.5 * K.sum(1 +
-    #         self.log_variance - K.square(self.mu) - K.exp(self.log_variance),
-    #         axis=1
-    #     )
+        error = y_target - y_predicted
+        reconstruction_loss = K.mean(K.square(error), axis=1)
 
-    #      return kl_loss
-    # ############################################################################
+        return reconstruction_loss
+    ############################################################################
+    def _kl_loss(self, y_target, y_predicted):
+
+        kl_loss = -0.5 * K.sum(1 +
+            self.log_variance - K.square(self.mu) - K.exp(self.log_variance),
+            axis=1
+        )
+
+        return kl_loss
+    ############################################################################
     def _build_ae(self):
 
         input = self._model_input
