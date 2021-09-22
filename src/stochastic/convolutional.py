@@ -9,52 +9,53 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras import Model
-from tensorflow.keras.layers import Dense, Input
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose
+from tensorflow.keras.layers import Dense, Flatten, Input
 from tensorflow.keras.layers import Activation, BatchNormalization, LeakyReLU
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 
-################################################################################
+###############################################################################
 tf.compat.v1.disable_eager_execution()
 # this is necessary because I use custom loss function
-################################################################################
+###############################################################################
 class CVAE:
+    def __init__(
+        self,
+        input_shape: "int",
+        encoder_filters: "list",
+        encoder_kernels: "list",
+        encoder_strides: "list",
+        latent_dimensions: "int",
+        decoder_filters: "list",
+        decoder_kernels: "list",
+        decoder_strides: "list",
+        batch_size: "int",
+        epochs: "int",
+        learning_rate: "float",
+        reconstruction_loss_weight: "float",
+        output_activation: "str" = "linear",
+    ) -> "tf.keras.model":
 
-    def __init__(self,
+        """
+        PARAMETERS
+
         input_shape:'int',
         encoder_filters:'list',
         encoder_kernels:'list',
         encoder_strides:'list',
-        latent_dimensions:'int',
+        latent_dimensions: number of  dimensions for the latent
+            representation
         decoder_filters:'list',
         decoder_kernels:'list',
         decoder_strides:'list',
-        batch_size:'int',
-        epochs:'int',
-        learning_rate:'float',
-        reconstruction_loss_weight:'float',
+        batch_size: number of batches for the training set
+        epochs: maximum number of epochs to train the algorithm
+        learning_rate: value for the learning rate
+        reconstruction_loss_weight: weighting factor for the
+            reconstruction loss
         output_activation:'str'='linear'
-        )->'tf.keras.model':
-
-        """
-            PARAMETERS
-
-            input_shape:'int',
-            encoder_filters:'list',
-            encoder_kernels:'list',
-            encoder_strides:'list',
-            latent_dimensions: number of  dimensions for the latent
-                representation
-            decoder_filters:'list',
-            decoder_kernels:'list',
-            decoder_strides:'list',
-            batch_size: number of batches for the training set
-            epochs: maximum number of epochs to train the algorithm
-            learning_rate: value for the learning rate
-            reconstruction_loss_weight: weighting factor for the
-                reconstruction loss
-            output_activation:'str'='linear'
         """
 
         self.input_shape = input_shape
@@ -82,35 +83,36 @@ class CVAE:
         self.model = None
 
         self._build()
+
     # ############################################################################
     # def reconstruct(self, spectra:'2D np.array')-> '2D np.array':
 
-   #      if spectra.ndim == 1:
+    #      if spectra.ndim == 1:
     #         spectra = spectra.reshape(1, -1)
 
-   #      return self.model.predict(spectra)
+    #      return self.model.predict(spectra)
     # ############################################################################
     # def encode(self, spectra:'2D np.array')-> '2D np.array':
 
-   #      if spectra.ndim == 1:
+    #      if spectra.ndim == 1:
     #         spectra = spectra.reshape(1, -1)
 
-   #      z = self.encoder.predict(spectra)
+    #      z = self.encoder.predict(spectra)
 
-   #      return z
+    #      return z
     # ############################################################################
     # def decode(self, z:'2D np.array')->'2D np.aray':
 
-   #      if z.ndim==1:
+    #      if z.ndim==1:
     #         coding = z.reshape(1,-1)
 
-   #      spectra = self.decoder.predict(z)
+    #      spectra = self.decoder.predict(z)
 
-   #      return spectra
+    #      return spectra
     # ############################################################################
     # def train(self, spectra):
 
-   #      self.model.fit(
+    #      self.model.fit(
     #         x=spectra,
     #         y=spectra,
     #         batch_size=self.batch_size,
@@ -119,7 +121,7 @@ class CVAE:
     #         shuffle=True
     #     )
     # ############################################################################
-    def _build(self)->'':
+    def _build(self) -> "":
         """
         Builds and returns a compiled variational auto encoder using
         keras API
@@ -129,12 +131,13 @@ class CVAE:
         # self._build_decoder()
         # self._build_vae()
         # self._compile()
+
     # ############################################################################
     # def _compile(self):
 
-   #      optimizer = Adam(learning_rate=self.learning_rate)
+    #      optimizer = Adam(learning_rate=self.learning_rate)
 
-   #      self.model.compile(
+    #      self.model.compile(
     #         optimizer=optimizer,
     #         loss=self._loss,
     #         metrics=['mse']#, self._kl_loss]
@@ -145,95 +148,96 @@ class CVAE:
     #     Standard loss function for the variational auto encoder
     #     , that is, for de reconstruction loss and the KL divergence.
 
-   #      # y_target, y_predicted: keep consistency with keras API
+    #      # y_target, y_predicted: keep consistency with keras API
     #     # a loss function expects this two parameters
 
-   #      INPUTS
+    #      INPUTS
     #         y_true : input datapoint
     #         y_pred : predicted value by the network
 
-   #      OUTPUT
+    #      OUTPUT
     #         loss function with the keras format that is compatible
     #         with the .compile API
     #     """
 
-   #      reconstruction_loss = self._reconstruction_loss(y_target, y_predicted)
+    #      reconstruction_loss = self._reconstruction_loss(y_target, y_predicted)
     #     kl_loss = self._kl_loss(y_target, y_predicted)
 
-   #      loss = self.reconstruction_weight * reconstruction_loss + kl_loss
+    #      loss = self.reconstruction_weight * reconstruction_loss + kl_loss
 
-   #      return loss
+    #      return loss
     # ############################################################################
     # def _reconstruction_loss(self, y_target, y_predicted):
 
-   #      error = y_target - y_predicted
+    #      error = y_target - y_predicted
     #     reconstruction_loss = K.mean(K.square(error), axis=1)
 
-   #      return reconstruction_loss
+    #      return reconstruction_loss
     # ############################################################################
     # def _kl_loss(self, y_target, y_predicted):
 
-   #      kl_loss = -0.5 * K.sum(1 +
+    #      kl_loss = -0.5 * K.sum(1 +
     #         self.log_variance - K.square(self.mu) - K.exp(self.log_variance),
     #         axis=1
     #     )
 
-   #      return kl_loss
+    #      return kl_loss
     # ############################################################################
     # def _build_vae(self):
 
-   #      input = self._model_input
+    #      input = self._model_input
     #     output = self.decoder(self.encoder(input))
     #     self.model = Model(input, output, name='variational auto-encoder')
     # ############################################################################
     # def _build_decoder(self):
 
-   #      decoder_input = Input(
+    #      decoder_input = Input(
     #         shape=(self.latent_dimensions,),
     #         name="decoder_input"
     #     )
 
-   #      decoder_block = self._add_block(
+    #      decoder_block = self._add_block(
     #         input=decoder_input,
     #         block='decoder'
     #     )
 
-   #      decoder_output = self._output_layer(decoder_block)
+    #      decoder_output = self._output_layer(decoder_block)
 
-   #      self.decoder = Model(decoder_input, decoder_output, name="decoder")
+    #      self.decoder = Model(decoder_input, decoder_output, name="decoder")
     # ############################################################################
     # def _output_layer(self, decoder_block:'keras.Dense'):
 
-   #      units = self.encoder_units[-1]
+    #      units = self.encoder_units[-1]
     #     standard_deviation = np.sqrt(2./units)
 
-   #      initial_weights = tf.keras.initializers.RandomNormal(
+    #      initial_weights = tf.keras.initializers.RandomNormal(
     #         mean=0.,
     #         stddev=standard_deviation
     #     )
 
-   #      output_layer = Dense(
+    #      output_layer = Dense(
     #         self.input_dimensions,
     #         kernel_initializer=initial_weights,
     #         name='decoder_output_layer'
     #         )
 
-   #      x = output_layer(decoder_block)
+    #      x = output_layer(decoder_block)
     #     x = Activation(self.out_activation, name='output_activation')(x)
 
-   #      return x
+    #      return x
     # ############################################################################
     def _build_encoder(self):
 
         encoder_input = Input(shape=self.input_shape, name="encoder_input")
-        encoder_block = self._add_block(input=encoder_input)
+        encoder_block = self._add_convolutional_block(input=encoder_input)
 
-        # latent_layer = self._latent_layer(encoder_block)
+        latent_layer = self._latent_layer(encoder_block)
 
-        # self._model_input = encoder_input
-        # self.encoder = Model(encoder_input, latent_layer, name="encoder")
+        self._model_input = encoder_input
+        self.encoder = Model(encoder_input, latent_layer, name="encoder")
+
     ############################################################################
-    def _add_convolutional_block(self, input:'keras.Input'):
+    def _add_convolutional_block(self, input: "keras.Input"):
 
         x = input
 
@@ -242,67 +246,72 @@ class CVAE:
             x = self._add_convolutional_layer(x, layer_index, filters)
 
         return x
+
     ############################################################################
-   def _add_convolutional_layer(self,
-      x:'keras.Dense',
-      layer_index:'int',
-      filters:'int',
-      ):
+    def _add_convolutional_layer(
+        self, x: "keras.Con2D", layer_index: "int", filters: "int"
+    ):
 
-      layer = Conv2D(
-         filters=self.encoder_filters[layer_index],
-         kernel_size=self.encoder_kernels[layer_index],
-         strides=self.encoder_strides[layer_index],
-         padding='same',
-         name=f'{block}_conv_{layer_index + 1}'
-      )
+        convolutional_layer = Conv2D(
+            filters=self.encoder_filters[layer_index],
+            kernel_size=self.encoder_kernels[layer_index],
+            strides=self.encoder_strides[layer_index],
+            padding="same",
+            name=f"encoder_conv_{layer_index + 1}",
+        )
 
-        x = layer(x)
-        x = LeakyReLU(name=f'LeakyReLU_{block}_{layer_index + 1}')(x)
+        x = convolutional_layer(x)
+        x = LeakyReLU(name=f"LeakyReLU_encoder_{layer_index + 1}")(x)
+
         x = BatchNormalization(
-           name=f'batch_normalization_{block}_{layer_index + 1}'
-      )(x)
+            name=f"batch_normalization_encoder_{layer_index + 1}"
+        )(x)
 
-      return x
+        return x
+
     ############################################################################
-    def _latent_layer(self, x:''):
+    def _latent_layer(self, x: ""):
+
+        x = Flatten()(x)
 
         self.mu = Dense(self.latent_dimensions, name="mu")(x)
 
-        self.log_variance = Dense(self.latent_dimensions,
-                                  name="log_variance")(x)
+        self.log_variance = Dense(self.latent_dimensions, name="log_variance")(
+            x
+        )
         ########################################################################
         def sample_normal_distribution(args):
 
             mu, log_variance = args
             epsilon = K.random_normal(
-                                        shape=K.shape(self.mu),
-                                        mean=0.,
-                                        stddev=1.
-                                      )
+                shape=K.shape(self.mu), mean=0.0, stddev=1.0
+            )
 
             point = mu + K.exp(log_variance / 2) * epsilon
 
             return point
         ########################################################################
-        x = Lambda(
-            sample_normal_distribution,
-            name='encoder_outputs'
+        x = Lambda(sample_normal_distribution,name="encoder_outputs"
         )([self.mu, self.log_variance])
 
         return x
+        ########################################################################
 
-    def save_model(self, directory:'str'):
+    # def save_model(self, directory: "str"):
 
-        self.encoder.save(f'{directory}/encoder')
-        self.decoder.save(f'{directory}/decoder')
-        self.model.save(f'{directory}/vae')
+   #      self.encoder.save(f"{directory}/encoder")
+    #     self.decoder.save(f"{directory}/decoder")
+    #     self.model.save(f"{directory}/vae")
+
+   #  ############################################################################
+    # def summary(self):
+    #     self.encoder.summary()
+    #     self.decoder.summary()
+    #     self.model.summary()
+
     ############################################################################
-    def summary(self):
-        self.encoder.summary()
-        self.decoder.summary()
-        self.model.summary()
-    ############################################################################
+
+
 #     def plot_model(self):
 #
 #         plot_model(self.vae, to_file='DenseVAE.png', show_shapes='True')

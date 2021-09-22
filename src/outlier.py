@@ -1,14 +1,16 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+
 ################################################################################
 class Outlier:
     """
     Class for dealing with the outliers based on a generative model trained with
     tensorflow.keras
     """
+
     ############################################################################
-    def __init__(self, metric:'str'='mse', p:'float'=0.25, epsilon=1E-3):
+    def __init__(self, metric: "str" = "mse", p: "float" = 0.25, epsilon=1e-3):
         """
         Init fucntion
 
@@ -25,34 +27,36 @@ class Outlier:
 
         self.p = p
         self.epsilon = epsilon
+
     ############################################################################
     def score(self, O, R, percentages):
         # check if I can use a dict or anything to avoid to much typing
-        print(f'Computing {self.metric} scores')
+        print(f"Computing {self.metric} scores")
 
-        if self.metric == 'mse':
+        if self.metric == "mse":
             return self._mse(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'mse_relative':
+        elif self.metric == "mse_relative":
             return self._mse_relative(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'mad':
+        elif self.metric == "mad":
             return self._mad(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'mad_relative':
+        elif self.metric == "mad_relative":
             return self._mad_relative(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'lp':
+        elif self.metric == "lp":
             return self._lp(O=O, R=R, percentages=percentages)
 
-        elif self.metric == 'lp_relative':
+        elif self.metric == "lp_relative":
             return self._lp_relative(O=O, R=R, percentages=percentages)
 
         else:
-            print(f'The provided metric: {self.metric} is not implemented yet')
+            print(f"The provided metric: {self.metric} is not implemented yet")
             sys.exit()
+
     ############################################################################
-# Mahalanobis, Canberra, Braycurtis, and KL-divergence
+    # Mahalanobis, Canberra, Braycurtis, and KL-divergence
     ############################################################################
     def _mse(self, O, R, percentages):
 
@@ -61,12 +65,13 @@ class Outlier:
 
             reconstruction = np.square(R - O)
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -77,20 +82,22 @@ class Outlier:
             scores.append(score.sum(axis=1))
 
         return scores
+
     ############################################################################
     def _mse_relative(self, O, R, percentages):
 
         scores = []
         for percentage in percentages:
 
-            reconstruction = np.square( (R - O)/(O + self.epsilon) )
+            reconstruction = np.square((R - O) / (O + self.epsilon))
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -101,6 +108,7 @@ class Outlier:
             scores.append(score.sum(axis=1))
 
         return scores
+
     ############################################################################
     ############################################################################
     def _mad(self, O, R, percentages):
@@ -110,12 +118,13 @@ class Outlier:
 
             reconstruction = np.abs(R - O)
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -126,20 +135,22 @@ class Outlier:
             scores.append(score.sum(axis=1))
 
         return scores
+
     ############################################################################
     def _mad_relative(self, O, R, percentages):
 
         scores = []
         for percentage in percentages:
 
-            reconstruction = np.abs( (R - O)/(O + self.epsilon) )
+            reconstruction = np.abs((R - O) / (O + self.epsilon))
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -150,6 +161,7 @@ class Outlier:
             scores.append(score.sum(axis=1))
 
         return scores
+
     ############################################################################
     ############################################################################
     def _lp(self, O, R, percentages):
@@ -157,14 +169,15 @@ class Outlier:
         scores = []
         for percentage in percentages:
 
-            reconstruction = np.abs(R - O)**self.p
+            reconstruction = np.abs(R - O) ** self.p
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -172,25 +185,27 @@ class Outlier:
 
                 score[n, :] = reconstruction[n, idx]
 
-            score = np.sum(score, axis=1)**(1 / self.p)
+            score = np.sum(score, axis=1) ** (1 / self.p)
 
             scores.append(score)
 
         return scores
+
     ############################################################################
     def _lp_relative(self, O, R, percentages):
 
         scores = []
         for percentage in percentages:
 
-            reconstruction = np.abs( (R - O)/(O + self.epsilon) )**self.p
+            reconstruction = np.abs((R - O) / (O + self.epsilon)) ** self.p
 
-            number_outlier_fluxes = int(0.01*percentage*reconstruction.shape[1])
+            number_outlier_fluxes = int(
+                0.01 * percentage * reconstruction.shape[1]
+            )
 
             largest_reconstruction_ids = np.argpartition(
-                reconstruction,
-                -1 * number_outlier_fluxes,
-                axis=1)[:, -1 * number_outlier_fluxes:]
+                reconstruction, -1 * number_outlier_fluxes, axis=1
+            )[:, -1 * number_outlier_fluxes :]
 
             score = np.empty(largest_reconstruction_ids.shape)
 
@@ -198,21 +213,25 @@ class Outlier:
 
                 score[n, :] = reconstruction[n, idx]
 
-            score = np.sum(score, axis=1)**(1 / self.p)
+            score = np.sum(score, axis=1) ** (1 / self.p)
 
             scores.append(score)
 
         return scores
+
     ############################################################################
     ############################################################################
     def top_reconstructions(self, scores, n_top_spectra):
-        spec_idxs = np.argpartition(scores,
-            [n_top_spectra, -1 * n_top_spectra])
+        spec_idxs = np.argpartition(
+            scores, [n_top_spectra, -1 * n_top_spectra]
+        )
 
-        most_normal_ids = spec_idxs[: n_top_spectra]
-        most_oulying_ids = spec_idxs[-1 * n_top_spectra:]
+        most_normal_ids = spec_idxs[:n_top_spectra]
+        most_oulying_ids = spec_idxs[-1 * n_top_spectra :]
 
         return most_normal_ids, most_oulying_ids
+
+
 ################################################################################
 # class Outlier:
 #     """

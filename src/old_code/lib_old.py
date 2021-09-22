@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import chisquare
 from sklearn.decomposition import PCA
+
 ################################################################################
 import tensorflow as tf
 from tensorflow import keras
@@ -21,8 +22,15 @@ class Outlier:
     tensorflow.keras
     """
 
-    def __init__(self, model_path, o_scores_path='.', metric='mse', p='p',
-        custom=False, custom_metric=None):
+    def __init__(
+        self,
+        model_path,
+        o_scores_path=".",
+        metric="mse",
+        p="p",
+        custom=False,
+        custom_metric=None,
+    ):
         """
         Init fucntion
 
@@ -53,7 +61,7 @@ class Outlier:
     def _get_OR(self, O, model):
 
         if len(O.shape) == 1:
-            O = O.reshape(1,-1)
+            O = O.reshape(1, -1)
 
         R = model.predict(O)
 
@@ -73,39 +81,39 @@ class Outlier:
             present in O
         """
 
-        model_name = self.model_path.split('/')[-1]
-        print(f'Loading model: {model_name}')
-        model = load_model(f'{self.model_path}')
+        model_name = self.model_path.split("/")[-1]
+        print(f"Loading model: {model_name}")
+        model = load_model(f"{self.model_path}")
 
         O, R = self._get_OR(O, model)
 
         if self.custom:
-            print(f'Computing the predictions of {model_name}')
+            print(f"Computing the predictions of {model_name}")
             return self.user_metric(O=O, R=R)
 
-        elif self.metric == 'mse':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "mse":
+            print(f"Computing the predictions of {model_name}")
             return self._mse(O=O, R=R)
 
-        elif self.metric == 'chi2':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "chi2":
+            print(f"Computing the predictions of {model_name}")
             return self._chi2(O=O, R=R)
 
-        elif self.metric == 'mad':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "mad":
+            print(f"Computing the predictions of {model_name}")
             return self._mad(O=O, R=R)
 
-        elif self.metric == 'lp':
+        elif self.metric == "lp":
 
-            if self.p == 'p' or self.p <= 0:
-                print(f'For the {self.metric} metric you need p')
+            if self.p == "p" or self.p <= 0:
+                print(f"For the {self.metric} metric you need p")
                 return None
 
-            print(f'Computing the predictions of {model_name}')
+            print(f"Computing the predictions of {model_name}")
             return self._lp(O=O, R=R)
 
         else:
-            print(f'The provided metric: {self.metric} is not implemented yet')
+            print(f"The provided metric: {self.metric} is not implemented yet")
             return None
 
     def _coscine_similarity(self, O, R):
@@ -163,7 +171,8 @@ class Outlier:
             present in O
         """
         pass
-# Mahalanobis, Canberra, Braycurtis, and KL-divergence
+
+    # Mahalanobis, Canberra, Braycurtis, and KL-divergence
     def _mse(self, O, R):
         """
         Computes the mean square error for the reconstruction of the input
@@ -181,7 +190,7 @@ class Outlier:
             present in O
         """
 
-        return np.square(R-O).mean(axis=1)
+        return np.square(R - O).mean(axis=1)
 
     def _chi2(self, O, R):
         """
@@ -200,7 +209,7 @@ class Outlier:
             present in O
         """
 
-        return (np.square(R-O)*(1/np.abs(R))).mean(axis=1)
+        return (np.square(R - O) * (1 / np.abs(R))).mean(axis=1)
 
     def _mad(self, O, R):
         """
@@ -219,7 +228,7 @@ class Outlier:
             from the objects present in O
         """
 
-        return np.abs(R-O).mean(axis=1)
+        return np.abs(R - O).mean(axis=1)
 
     def _lp(self, O, R):
         """
@@ -237,8 +246,9 @@ class Outlier:
             present in O
         """
 
-        return (np.sum((np.abs(R-O))**self.p, axis=1))**(1/self.p)
-# gotta code conditionals to make sure that the user inputs a "good one"
+        return (np.sum((np.abs(R - O)) ** self.p, axis=1)) ** (1 / self.p)
+
+    # gotta code conditionals to make sure that the user inputs a "good one"
     def user_metric(self, custom_metric, O, R):
         """
         Computes the custom metric for the reconstruction of the input objects
@@ -276,11 +286,11 @@ class Outlier:
                 the path of the object in the files system
         """
 
-
         # print('Gathering name of data points used for training')
 
-        sdss_names = [name.split('/')[-1].split('.')[0] for name in
-            training_data_files]
+        sdss_names = [
+            name.split("/")[-1].split(".")[0] for name in training_data_files
+        ]
 
         # print('Retrieving the sdss name of the desired spectrum')
 
@@ -309,21 +319,23 @@ class Outlier:
         """
 
         if os.path.exists(f"{self.o_scores_path}/{self.metric}_o_score.npy"):
-            scores= np.load(f"{self.o_scores_path}/{self.metric}_o_score.npy")
+            scores = np.load(f"{self.o_scores_path}/{self.metric}_o_score.npy")
         else:
             scores = self.score(O)
 
-        spec_idxs = np.argpartition(scores,
-        [n_top_spectra, -1*n_top_spectra])
+        spec_idxs = np.argpartition(
+            scores, [n_top_spectra, -1 * n_top_spectra]
+        )
 
-        most_normal_ids = spec_idxs[: n_top_spectra]
-        most_oulying_ids = spec_idxs[-1*n_top_spectra:]
+        most_normal_ids = spec_idxs[:n_top_spectra]
+        most_oulying_ids = spec_idxs[-1 * n_top_spectra :]
 
         return most_normal_ids, most_oulying_ids
+
+
 ###############################################################################
 class AEpca:
-
-    def __init__(self, in_dim, lat_dim=2, batch_size=32, epochs=10, lr= 1e-4):
+    def __init__(self, in_dim, lat_dim=2, batch_size=32, epochs=10, lr=1e-4):
         self.in_dim = in_dim
         self.batch_size = batch_size
         self.lat_dim = lat_dim
@@ -337,33 +349,35 @@ class AEpca:
     def _init_AE(self):
 
         # Build Encoder
-        inputs = Input(shape=(self.in_dim,), name='encoder_input')
-        latent = Dense(self.lat_dim, name='latent_vector')(inputs)
-        self.encoder = Model(inputs, latent, name='encoder')
+        inputs = Input(shape=(self.in_dim,), name="encoder_input")
+        latent = Dense(self.lat_dim, name="latent_vector")(inputs)
+        self.encoder = Model(inputs, latent, name="encoder")
         self.encoder.summary()
-#        plot_model(self.encoder, to_file='encoder.png', show_shapes='True')
+        #        plot_model(self.encoder, to_file='encoder.png', show_shapes='True')
 
         # Build Decoder
-        latent_in = Input(shape=(self.lat_dim,), name='decoder_input')
-        outputs = Dense(self.in_dim, name='decoder_output')(latent_in)
-        self.decoder = Model(latent_in, outputs, name='decoder')
+        latent_in = Input(shape=(self.lat_dim,), name="decoder_input")
+        outputs = Dense(self.in_dim, name="decoder_output")(latent_in)
+        self.decoder = Model(latent_in, outputs, name="decoder")
         self.decoder.summary()
-#        plot_model(self.decoder, to_file='decoder.png', show_shapes='True')
+        #        plot_model(self.decoder, to_file='decoder.png', show_shapes='True')
 
         # AE = Encoder + Decoder
-        autoencoder = Model(inputs, self.decoder(self.encoder
-                            (inputs)), name='autoencoder')
+        autoencoder = Model(
+            inputs, self.decoder(self.encoder(inputs)), name="autoencoder"
+        )
         autoencoder.summary()
-#        plot_model(autoencoder, to_file='autoencoder.png', show_shapes=True)
+        #        plot_model(autoencoder, to_file='autoencoder.png', show_shapes=True)
 
         # Mean square error loss function with Adam optimizer
-        autoencoder.compile(loss='mse', optimizer='adam') #, lr = self.lr)
+        autoencoder.compile(loss="mse", optimizer="adam")  # , lr = self.lr)
 
         self.AE = autoencoder
 
     def fit(self, spectra):
-        self.AE.fit(spectra, spectra, epochs=self.epochs,
-                    batch_size=self.batch_size)
+        self.AE.fit(
+            spectra, spectra, epochs=self.epochs, batch_size=self.batch_size
+        )
 
     def predict(self, test_spec):
         if test_spec.ndim == 1:
@@ -379,14 +393,15 @@ class AEpca:
         return self.decoder(lat_val)
 
     def save(self):
-        self.encoder.save('encoder')
-        self.decoder.save('decoder')
-        self.AE.save('AutoEncoder')
+        self.encoder.save("encoder")
+        self.decoder.save("decoder")
+        self.AE.save("AutoEncoder")
+
+
 ###############################################################################
 class PcA:
-
-    def __init__(self, n_comps = False):
-        if not(n_comps):
+    def __init__(self, n_comps=False):
+        if not (n_comps):
             self.PCA = PCA()
         else:
             self.n_comps = n_comps
@@ -412,32 +427,38 @@ class PcA:
             test_spec = test_spec.reshape(1, -1)
 
         return self.PCA.transform(test_spec)
+
+
 ###############################################################################
-def plt_spec_pca(flx,pca_flx,componets):
-    '''Comparative plot to see how efficient is the PCA compression'''
-    plt.figure(figsize=(8,4));
+def plt_spec_pca(flx, pca_flx, componets):
+    """Comparative plot to see how efficient is the PCA compression"""
+    plt.figure(figsize=(8, 4))
 
     # Original Image
-    plt.subplot(1, 2, 1);
+    plt.subplot(1, 2, 1)
     plt.plot(flx)
-    plt.xlabel(f'{flx.size} components', fontsize = 14)
-    plt.title('Original Spectra', fontsize = 20)
+    plt.xlabel(f"{flx.size} components", fontsize=14)
+    plt.title("Original Spectra", fontsize=20)
 
     # principal components
-    plt.subplot(1, 2, 2);
+    plt.subplot(1, 2, 2)
     plt.plot(pca_flx)
-    plt.xlabel(f'{componets} componets', fontsize = 14)
-    plt.title('Reconstructed spectra', fontsize = 20)
+    plt.xlabel(f"{componets} componets", fontsize=14)
+    plt.title("Reconstructed spectra", fontsize=20)
     plt.show()
     plt.close()
+
+
 ###############################################################################
 def plot_2D(data, title):
     fig = plt.figure()
     plt.title(title)
-    plt.plot(data[:,0], data[:, 1], "b.")
+    plt.plot(data[:, 0], data[:, 1], "b.")
     plt.xlabel("$z_1$", fontsize=18)
     plt.ylabel("$z_2$", fontsize=18, rotation=0)
-    plt.savefig(f'{title}.png')
+    plt.savefig(f"{title}.png")
     plt.show()
     plt.close()
+
+
 ###############################################################################

@@ -10,44 +10,45 @@ import numpy as np
 from lib_VAE_outlier import AEDense, Base36
 from lib_VAE_outlier import load_data
 from lib_VAE_outlier import plot_history
+
 ###############################################################################
 ti = time.time()
 ###############################################################################
 parser = ArgumentParser()
-parser.add_argument('--server', '-s', type=str)
+parser.add_argument("--server", "-s", type=str)
 script_arguments = parser.parse_args()
-local = script_arguments.server == 'local'
+local = script_arguments.server == "local"
 ###############################################################################
 # read them from the configuration file
 parser = ConfigParser(interpolation=ExtendedInterpolation())
-parser.read('ae.ini')
-    ############################################################################
+parser.read("ae.ini")
+############################################################################
 # network architecture
-encoder_str = parser.get('network architecture', 'encoder_layers')
-layers_encoder = [int(units) for units in encoder_str.split('_')]
+encoder_str = parser.get("network architecture", "encoder_layers")
+layers_encoder = [int(units) for units in encoder_str.split("_")]
 
-latent_dimensions = parser.getint('network architecture', 'latent_dimensions')
+latent_dimensions = parser.getint("network architecture", "latent_dimensions")
 
-decoder_str = parser.get('network architecture', 'decoder_layers')
-layers_decoder = [int(units) for units in decoder_str.split('_')]
+decoder_str = parser.get("network architecture", "decoder_layers")
+layers_decoder = [int(units) for units in decoder_str.split("_")]
 
-layers_str = f'{encoder_str}_{latent_dimensions}_{decoder_str}'
-    ############################################################################
+layers_str = f"{encoder_str}_{latent_dimensions}_{decoder_str}"
+############################################################################
 # network hyperparameters
-loss = parser.get('network hyper-parameters', 'loss')
-learning_rate = parser.getfloat('network hyper-parameters', 'learning_rate')
-batch_size = parser.getint('network hyper-parameters', 'batch_size')
-epochs = parser.getint('network hyper-parameters', 'epochs')
-    ############################################################################
+loss = parser.get("network hyper-parameters", "loss")
+learning_rate = parser.getfloat("network hyper-parameters", "learning_rate")
+batch_size = parser.getint("network hyper-parameters", "batch_size")
+epochs = parser.getint("network hyper-parameters", "epochs")
+############################################################################
 # data parameters
-normalization_type = parser.get('data hyper-parameters', 'normalization_type')
-number_spectra = parser.getint('data hyper-parameters', 'number_spectra')
-number_snr = parser.getint('data hyper-parameters', 'number_snr')
-    ############################################################################
+normalization_type = parser.get("data hyper-parameters", "normalization_type")
+number_spectra = parser.getint("data hyper-parameters", "number_spectra")
+number_snr = parser.getint("data hyper-parameters", "number_snr")
+############################################################################
 # Relevant directories
-data_dir = parser.get('paths', 'data_dir')
+data_dir = parser.get("paths", "data_dir")
 # Defining directorie to save the model once it is trained
-models_dir = parser.get('paths', 'models_dir')
+models_dir = parser.get("paths", "models_dir")
 if not os.path.exists(models_dir):
     os.makedirs(models_dir)
     ############################################################################
@@ -91,8 +92,16 @@ if not os.path.exists(models_dir):
 # number_input_dimensions = train_set[:, :-8].shape[1]
 number_input_dimensions = 3000
 # ############################################################################
-ae = AEDense(number_input_dimensions, layers_encoder, latent_dimensions,
-    layers_decoder, batch_size, epochs, learning_rate, loss)
+ae = AEDense(
+    number_input_dimensions,
+    layers_encoder,
+    latent_dimensions,
+    layers_decoder,
+    batch_size,
+    epochs,
+    learning_rate,
+    loss,
+)
 
 # ae.summary()
 # ###############################################################################
@@ -119,4 +128,4 @@ ae = AEDense(number_input_dimensions, layers_encoder, latent_dimensions,
 # plot_history(history, f'{models_dir}/{ae_name}')
 # ################################################################################
 tf = time.time()
-print(f'Running time: {tf-ti:.2f}')
+print(f"Running time: {tf-ti:.2f}")

@@ -3,9 +3,17 @@ class OutlierOld:
     Class for dealing with the outliers based on a generative model trained with
     tensorflow.keras
     """
+
     ############################################################################
-    def __init__(self, model_path, o_scores_path='.', metric='mse', p='p',
-                 custom=False, custom_metric=None):
+    def __init__(
+        self,
+        model_path,
+        o_scores_path=".",
+        metric="mse",
+        p="p",
+        custom=False,
+        custom_metric=None,
+    ):
         """
         Init fucntion
 
@@ -32,6 +40,7 @@ class OutlierOld:
         self.custom = custom
         if self.custom:
             self.custom_metric = custom_metric
+
     ############################################################################
     def _get_OR(self, O, model):
 
@@ -41,6 +50,7 @@ class OutlierOld:
         R = model.predict(O)
 
         return O, R
+
     ############################################################################
     def score(self, O):
         """
@@ -56,40 +66,41 @@ class OutlierOld:
             present in O
         """
 
-        model_name = self.model_path.split('/')[-1]
-        print(f'Loading model: {model_name}')
-        model = load_model(f'{self.model_path}')
+        model_name = self.model_path.split("/")[-1]
+        print(f"Loading model: {model_name}")
+        model = load_model(f"{self.model_path}")
 
         O, R = self._get_OR(O, model)
         # check if I can use a dict or anything to avoid to much typing
         if self.custom:
-            print(f'Computing the predictions of {model_name}')
+            print(f"Computing the predictions of {model_name}")
             return self.user_metric(O=O, R=R)
 
-        elif self.metric == 'mse':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "mse":
+            print(f"Computing the predictions of {model_name}")
             return self._mse(O=O, R=R)
 
-        elif self.metric == 'chi2':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "chi2":
+            print(f"Computing the predictions of {model_name}")
             return self._chi2(O=O, R=R)
 
-        elif self.metric == 'mad':
-            print(f'Computing the predictions of {model_name}')
+        elif self.metric == "mad":
+            print(f"Computing the predictions of {model_name}")
             return self._mad(O=O, R=R)
 
-        elif self.metric == 'lp':
+        elif self.metric == "lp":
 
-            if self.p == 'p' or self.p <= 0:
-                print(f'For the {self.metric} metric you need p')
+            if self.p == "p" or self.p <= 0:
+                print(f"For the {self.metric} metric you need p")
                 return None
 
-            print(f'Computing the predictions of {model_name}')
+            print(f"Computing the predictions of {model_name}")
             return self._lp(O=O, R=R)
 
         else:
-            print(f'The provided metric: {self.metric} is not implemented yet')
+            print(f"The provided metric: {self.metric} is not implemented yet")
             return None
+
     ############################################################################
     def _coscine_similarity(self, O, R):
         """
@@ -108,6 +119,7 @@ class OutlierOld:
             objects O and their reconstructiob
         """
         pass
+
     ############################################################################
     def _jaccard_index(self, O, R):
         """
@@ -126,6 +138,7 @@ class OutlierOld:
             present in O
         """
         pass
+
     ############################################################################
     def _sorensen_dice_index(self, O, R):
         """
@@ -144,7 +157,8 @@ class OutlierOld:
             present in O
         """
         pass
-# Mahalanobis, Canberra, Braycurtis, and KL-divergence
+
+    # Mahalanobis, Canberra, Braycurtis, and KL-divergence
     ############################################################################
     def _mse(self, O, R):
         """
@@ -164,6 +178,7 @@ class OutlierOld:
         """
 
         return np.square(R - O).mean(axis=1)
+
     ############################################################################
     def _chi2(self, O, R):
         """
@@ -183,6 +198,7 @@ class OutlierOld:
         """
 
         return (np.square(R - O) * (1 / np.abs(R))).mean(axis=1)
+
     ############################################################################
     def _mad(self, O, R):
         """
@@ -202,6 +218,7 @@ class OutlierOld:
         """
 
         return np.abs(R - O).mean(axis=1)
+
     ############################################################################
     def _lp(self, O, R):
         """
@@ -219,8 +236,9 @@ class OutlierOld:
             present in O
         """
 
-        return (np.sum((np.abs(R - O))**self.p, axis=1))**(1 / self.p)
-# gotta code conditionals to make sure that the user inputs a "good one"
+        return (np.sum((np.abs(R - O)) ** self.p, axis=1)) ** (1 / self.p)
+
+    # gotta code conditionals to make sure that the user inputs a "good one"
     ############################################################################
     def user_metric(self, custom_metric, O, R):
         """
@@ -240,6 +258,7 @@ class OutlierOld:
         """
 
         return self.custom_metric(O, R)
+
     ############################################################################
     def metadata(self, spec_idx, training_data_files):
         """
@@ -261,8 +280,9 @@ class OutlierOld:
 
         # print('Gathering name of data points used for training')
 
-        sdss_names = [name.split('/')[-1].split('.')[0] for name in
-                      training_data_files]
+        sdss_names = [
+            name.split("/")[-1].split(".")[0] for name in training_data_files
+        ]
 
         # print('Retrieving the sdss name of the desired spectrum')
 
@@ -270,6 +290,7 @@ class OutlierOld:
         sdss_name_path = training_data_files[spec_idx]
 
         return sdss_name, sdss_name_path
+
     ############################################################################
     def top_reconstructions(self, O, n_top_spectra):
         """
@@ -295,12 +316,14 @@ class OutlierOld:
         else:
             scores = self.score(O)
 
-        spec_idxs = np.argpartition(scores,
-                                    [n_top_spectra, -1 * n_top_spectra])
+        spec_idxs = np.argpartition(
+            scores, [n_top_spectra, -1 * n_top_spectra]
+        )
 
-        most_normal_ids = spec_idxs[: n_top_spectra]
-        most_oulying_ids = spec_idxs[-1 * n_top_spectra:]
+        most_normal_ids = spec_idxs[:n_top_spectra]
+        most_oulying_ids = spec_idxs[-1 * n_top_spectra :]
 
         return most_normal_ids, most_oulying_ids
+
 
 ###############################################################################
