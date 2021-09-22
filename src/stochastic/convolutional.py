@@ -130,7 +130,7 @@ class CVAE:
 
         self._build_encoder()
         self._build_decoder()
-        # self._build_vae()
+        self._build_ae()
         # self._compile()
 
     # ############################################################################
@@ -184,11 +184,11 @@ class CVAE:
 
     #      return kl_loss
     # ############################################################################
-    # def _build_vae(self):
+    def _build_ae(self):
 
-    #      input = self._model_input
-    #     output = self.decoder(self.encoder(input))
-    #     self.model = Model(input, output, name='variational auto-encoder')
+        input = self._model_input
+        output = self.decoder(self.encoder(input))
+        self.model = Model(input, output, name='convolutional vae')
     ############################################################################
     def _build_decoder(self):
 
