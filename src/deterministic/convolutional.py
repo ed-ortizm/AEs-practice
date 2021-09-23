@@ -86,30 +86,34 @@ class CVAE:
         self._build()
 
     ############################################################################
-    def reconstruct(self, spectra:'4D np.array')-> '2D np.array':
+    def reconstruct(self, spectra: "4D np.array") -> "2D np.array":
 
         spectra = self._update_dimensions(spectra)
 
         return self.model.predict(spectra)
+
     ############################################################################
-    def encode(self, spectra:'2D np.array')-> '2D np.array':
+    def encode(self, spectra: "2D np.array") -> "2D np.array":
 
         spectra = self._update_dimensions(spectra)
         z = self.encoder.predict(spectra)
         return z
+
     ############################################################################
-    def decode(self, z:'2D np.array')->'2D np.aray':
+    def decode(self, z: "2D np.array") -> "2D np.aray":
 
         spectra = self._update_dimensions(spectra)
         spectra = self.decoder.predict(z)
         return spectra
+
     ############################################################################
-    def _update_dimensions(self, x:'np.array'):
+    def _update_dimensions(self, x: "np.array"):
 
         if x.ndim == 3:
             x = x[np.newaxis, ...]
 
         return x
+
     ############################################################################
     def train(self, spectra):
 
@@ -119,8 +123,9 @@ class CVAE:
             batch_size=self.batch_size,
             epochs=self.epochs,
             verbose=2,
-            shuffle=True
+            shuffle=True,
         )
+
     ############################################################################
     def _build(self) -> "":
         """
@@ -141,8 +146,9 @@ class CVAE:
         self.model.compile(
             optimizer=optimizer,
             loss=self._loss,
-            metrics=['mse']#, self._kl_loss]
+            metrics=["mse"],  # , self._kl_loss]
         )
+
     ############################################################################
     def _loss(self, y_target, y_predicted):
         """
@@ -167,6 +173,7 @@ class CVAE:
         loss = self.reconstruction_weight * reconstruction_loss + kl_loss
 
         return loss
+
     ############################################################################
     def _reconstruction_loss(self, y_target, y_predicted):
 
@@ -174,30 +181,35 @@ class CVAE:
         reconstruction_loss = K.mean(K.square(error), axis=[1, 2, 3])
 
         return reconstruction_loss
+
     ############################################################################
     def _kl_loss(self, y_target, y_predicted):
 
-        kl_loss = -0.5 * K.sum(1 +
-            self.log_variance - K.square(self.mu) - K.exp(self.log_variance),
-            axis=1
+        kl_loss = -0.5 * K.sum(
+            1
+            + self.log_variance
+            - K.square(self.mu)
+            - K.exp(self.log_variance),
+            axis=1,
         )
 
         return kl_loss
+
     ############################################################################
     def _build_ae(self):
 
         input = self._model_input
         output = self.decoder(self.encoder(input))
-        self.model = Model(input, output, name='convolutional vae')
+        self.model = Model(input, output, name="convolutional vae")
+
     ############################################################################
     def _build_decoder(self):
 
         decoder_input = Input(
-            shape=(self.latent_dimensions,),
-            name="decoder_input"
+            shape=(self.latent_dimensions,), name="decoder_input"
         )
 
-        units = np.prod(self._shape_before_latent) # [1, 2, 4] -> 8
+        units = np.prod(self._shape_before_latent)  # [1, 2, 4] -> 8
         dense_layer = Dense(units, name="decoder_dense")(decoder_input)
         reshape_layer = Reshape(self._shape_before_latent)(dense_layer)
 
@@ -208,22 +220,23 @@ class CVAE:
         decoder_output = self._output_layer(decoder_block)
 
         self.decoder = Model(decoder_input, decoder_output, name="decoder")
+
     ############################################################################
-    def _add_transpose_convolutional_block(self, input: 'keras.Input'):
+    def _add_transpose_convolutional_block(self, input: "keras.Input"):
 
         x = input
 
         for layer_index, filters in enumerate(self.decoder_filters):
 
             x = self._add_transpose_convolutional_layer(
-                x, layer_index, filters)
+                x, layer_index, filters
+            )
 
         return x
+
     ############################################################################
-    def _add_transpose_convolutional_layer(self,
-        x:"keras.Conv2DTranspose",
-        layer_index:"int",
-        filters:"int"
+    def _add_transpose_convolutional_layer(
+        self, x: "keras.Conv2DTranspose", layer_index: "int", filters: "int"
     ):
 
         transpose_convolutional_layer = Conv2DTranspose(
@@ -241,20 +254,21 @@ class CVAE:
         return x
 
     ############################################################################
-    def _output_layer(self, decoder_block:'keras.Conv2DTranspose'):
+    def _output_layer(self, decoder_block: "keras.Conv2DTranspose"):
 
         output_layer = Conv2DTranspose(
             filters=1,
             kernel_size=self.decoder_kernels[-1],
             strides=self.decoder_strides[-1],
             padding="same",
-            name=f"decoder_output_layer"
+            name=f"decoder_output_layer",
         )
 
         x = output_layer(decoder_block)
-        x = Activation(self.out_activation, name='output_activation')(x)
+        x = Activation(self.out_activation, name="output_activation")(x)
 
         return x
+
     ############################################################################
     def _build_encoder(self):
 
@@ -318,26 +332,29 @@ class CVAE:
             point = mu + K.exp(log_variance / 2) * epsilon
 
             return point
+
         ########################################################################
-        x = Lambda(sample_normal_distribution,name="encoder_outputs"
-        )([self.mu, self.log_variance])
+        x = Lambda(sample_normal_distribution, name="encoder_outputs")(
+            [self.mu, self.log_variance]
+        )
 
         return x
         ########################################################################
 
     # def save_model(self, directory: "str"):
 
-   #      self.encoder.save(f"{directory}/encoder")
-    #     self.decoder.save(f"{directory}/decoder")
-    #     self.model.save(f"{directory}/vae")
 
-   #  ############################################################################
-    # def summary(self):
-    #     self.encoder.summary()
-    #     self.decoder.summary()
-    #     self.model.summary()
+#      self.encoder.save(f"{directory}/encoder")
+#     self.decoder.save(f"{directory}/decoder")
+#     self.model.save(f"{directory}/vae")
 
-    ############################################################################
+#  ############################################################################
+# def summary(self):
+#     self.encoder.summary()
+#     self.decoder.summary()
+#     self.model.summary()
+
+############################################################################
 
 
 #     def plot_model(self):

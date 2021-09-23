@@ -7,15 +7,17 @@ import time
 ################################################################################
 import numpy as np
 import json
+
 ################################################################################
 parser = ConfigParser(interpolation=ExtendedInterpolation())
-parser.read("convolutional.ini")
+parser.read("train.ini")
 ############################################################
-# to import from src since I'm in a difrent leaf of the tree structure
+# to import from src since I'm in a difrent leaf of a the tree structure
 work_directory = parser.get("directories", "work")
 sys.path.insert(0, f"{work_directory}")
 ################################################################################
-from src import variational
+from src import helpers
+import src.variational.convolutional as variational
 
 ################################################################################
 ti = time.time()
@@ -27,27 +29,16 @@ ti = time.time()
 # input_dimensions = data.shape[1]
 ############################################################################
 # network architecture
-input_shape = parser.get("architecture", "input")
-input_shape = json.loads(input_shape)
-print(input_shape)
-# encoder_filters =
-# encoder_kernels =
-# encoder_strides =
-# latent_dimensions =
-# decoder_filters =
-# decoder_kernels =
-# decoder_strides =
-# batch_size =
-# epochs =
-# learning_rate =
-# reconstruction_loss_weight =
-# encoder_units = parser.get("architecture", "encoder")
-# encoder_units = [int(units) for units in encoder_units.split("_")]
-#
-# latent_dimensions = parser.getint("architecture", "latent_dimensions")
-#
-# decoder_units = parser.get("architecture", "decoder")
-# decoder_units = [int(units) for units in decoder_units.split("_")]
+[
+    input_shape,
+    encoder_filters,
+    encoder_kernels,
+    encoder_strides,
+    latent_dimensions,
+    decoder_filters,
+    decoder_kernels,
+    decoder_strides
+] = helpers.get_architecture(parser)
 ############################################################################
 # network hyperparameters
 learning_rate = parser.getfloat("hyper-parameters", "learning_rate")
@@ -58,16 +49,20 @@ reconstruction_weight = parser.getint(
     "hyper-parameters", "reconstruction_weight"
 )
 ################################################################################
-# vae = VAE(
-#     input_dimensions=input_dimensions,
-#     encoder_units=encoder_units,
-#     latent_dimensions=latent_dimensions,
-#     decoder_units=decoder_units,
-#     batch_size=batch_size,
-#     epochs=epochs,
-#     learning_rate=learning_rate,
-#     reconstruction_loss_weight=reconstruction_weight,
-# )
+cvae = variational.CAE(
+    input_shape,
+    encoder_filters,
+    encoder_kernels,
+    encoder_strides,
+    latent_dimensions,
+    decoder_filters,
+    decoder_kernels,
+    decoder_strides,
+    batch_size=batch_size,
+    epochs=epochs,
+    learning_rate=learning_rate,
+    reconstruction_loss_weight=reconstruction_weight,
+)
 #
 # vae.summary()
 ################################################################################
