@@ -95,10 +95,14 @@ class CVAE:
     def encode(self, spectra:'2D np.array')-> '2D np.array':
 
         spectra = self._update_dimensions(spectra)
-
         z = self.encoder.predict(spectra)
-
         return z
+    ############################################################################
+    def decode(self, z:'2D np.array')->'2D np.aray':
+
+        spectra = self._update_dimensions(spectra)
+        spectra = self.decoder.predict(z)
+        return spectra
     ############################################################################
     def _update_dimensions(self, x:'np.array'):
 
@@ -106,15 +110,6 @@ class CVAE:
             x = x[np.newaxis, ...]
 
         return x
-    ############################################################################
-    def decode(self, z:'2D np.array')->'2D np.aray':
-
-         if z.ndim==1:
-            coding = z.reshape(1,-1)
-
-         spectra = self.decoder.predict(z)
-
-         return spectra
     ############################################################################
     def train(self, spectra):
 
@@ -176,7 +171,7 @@ class CVAE:
     def _reconstruction_loss(self, y_target, y_predicted):
 
         error = y_target - y_predicted
-        reconstruction_loss = K.mean(K.square(error), axis=1)
+        reconstruction_loss = K.mean(K.square(error), axis=[1, 2, 3])
 
         return reconstruction_loss
     ############################################################################
